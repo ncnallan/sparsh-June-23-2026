@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>🎤 Family Stage Show — Setlist Manager</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<title>Sparsh — June 13th 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Playfair+Display:wght@700;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <style>
@@ -42,7 +42,7 @@
   header {
     background: linear-gradient(135deg, var(--purple) 0%, #1a0a50 50%, var(--purple-mid) 100%);
     border-bottom: 2px solid var(--gold);
-    padding: 16px 20px 14px;
+    padding: 10px 14px 10px;
     position: sticky; top: 0; z-index: 100;
     box-shadow: 0 4px 24px rgba(0,0,0,0.5);
   }
@@ -80,7 +80,7 @@
 
   /* ── TOOLBAR ── */
   .toolbar {
-    padding: 12px 16px;
+    padding: 8px 12px;
     display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
     border-bottom: 1px solid var(--border);
     background: var(--surface);
@@ -97,18 +97,18 @@
 
   /* ── TABLE WRAPPER ── */
   .table-wrap {
-    padding: 12px 12px 80px;
+    padding: 8px 8px 80px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
   table {
-    width: 100%; border-collapse: separate; border-spacing: 0 6px;
-    min-width: 620px;
+    width: 100%; border-collapse: separate; border-spacing: 0 4px;
+    min-width: 520px;
   }
   thead tr { background: transparent; }
   thead th {
-    padding: 10px 12px; text-align: left;
-    font-size: clamp(0.7rem, 2.5vw, 0.8rem);
+    padding: 7px 8px; text-align: left;
+    font-size: clamp(0.68rem, 2.3vw, 0.78rem);
     text-transform: uppercase; letter-spacing: 0.08em;
     color: var(--gold); font-weight: 700;
     border-bottom: 1px solid var(--border);
@@ -127,8 +127,8 @@
   tbody tr.dragging { opacity: 0.5; cursor: grabbing; }
   tbody tr.drag-over { box-shadow: 0 0 0 2px var(--gold); background: rgba(255,215,0,0.08); }
   tbody td {
-    padding: 10px 12px;
-    font-size: clamp(0.8rem, 3vw, 0.9rem);
+    padding: 7px 8px;
+    font-size: clamp(0.78rem, 2.8vw, 0.88rem);
     vertical-align: middle;
     border-top: 1px solid rgba(255,255,255,0.04);
     border-bottom: 1px solid rgba(255,255,255,0.04);
@@ -188,9 +188,9 @@
   .link-cell .cell-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; font-size: 0.78rem; color: var(--text-dim); }
   .play-btn {
     background: linear-gradient(135deg, #00CED1, #007a7c);
-    border: none; border-radius: 50%; width: 32px; height: 32px;
+    border: none; border-radius: 50%; width: 28px; height: 28px;
     display: flex; align-items: center; justify-content: center;
-    cursor: pointer; flex-shrink: 0; font-size: 0.8rem;
+    cursor: pointer; flex-shrink: 0; font-size: 0.75rem;
     transition: transform 0.15s, filter 0.15s; color: #fff;
   }
   .play-btn:hover { transform: scale(1.15); filter: brightness(1.2); }
@@ -272,6 +272,50 @@
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--purple-mid); border-radius: 2px; }
 
+  /* ── TITLE ANIMATION ── */
+  .title-block { display: flex; flex-direction: column; gap: 2px; }
+  #sparshTitle {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+    opacity: 0;
+    transform: translateX(-60px);
+    animation: slideInLeft 0.7s cubic-bezier(0.22,1,0.36,1) 0.2s forwards;
+    line-height: 1;
+  }
+  .mic-svg {
+    width: clamp(1.6rem, 6vw, 2.2rem);
+    height: clamp(1.6rem, 6vw, 2.2rem);
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 8px rgba(255,215,0,0.5));
+  }
+  .sparsh-text {
+    font-family: 'Cinzel Decorative', cursive;
+    font-size: clamp(1.3rem, 5.5vw, 1.9rem);
+    font-weight: 700;
+    background: linear-gradient(90deg, #FFD700 0%, #fff0a0 40%, #7B5CF0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 0.08em;
+    filter: drop-shadow(0 0 12px rgba(255,215,0,0.35));
+  }
+  .show-date {
+    font-size: clamp(0.65rem, 2.6vw, 0.8rem);
+    color: var(--gold-light);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    padding-left: 2px;
+    opacity: 0;
+    transform: translateX(-40px);
+    animation: slideInLeft 0.6s cubic-bezier(0.22,1,0.36,1) 0.5s forwards;
+  }
+  @keyframes slideInLeft {
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* ── COMPACT TABLE ── */
   @media (max-width: 480px) {
     .link-cell .cell-text { max-width: 70px; }
     thead th:last-child { display: none; }
@@ -282,7 +326,24 @@
 
 <header>
   <div class="header-top">
-    <h1>🎤 Family Stage Show <span>Setlist Manager</span></h1>
+    <div class="title-block">
+      <h1 id="sparshTitle">
+        <svg class="mic-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="micGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#FFD700"/>
+              <stop offset="100%" stop-color="#7B5CF0"/>
+            </linearGradient>
+          </defs>
+          <rect x="9" y="2" width="6" height="11" rx="3" fill="url(#micGrad)"/>
+          <path d="M5 11a7 7 0 0 0 14 0" stroke="url(#micGrad)" stroke-width="2" stroke-linecap="round" fill="none"/>
+          <line x1="12" y1="18" x2="12" y2="22" stroke="url(#micGrad)" stroke-width="2" stroke-linecap="round"/>
+          <line x1="8" y1="22" x2="16" y2="22" stroke="url(#micGrad)" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <span class="sparsh-text">Sparsh</span>
+      </h1>
+      <div class="show-date">🗓 June 13th, 2026</div>
+    </div>
     <div class="header-actions">
       <button class="btn btn-icon btn-secondary" id="refreshBtn" title="Refresh from Supabase">🔄</button>
       <button class="btn btn-icon btn-secondary" id="exportBtn" title="Export to Excel">📥</button>
