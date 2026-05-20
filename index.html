@@ -1,0 +1,1145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>🎤 Sparsh — June 13th 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Geist+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#080810;--s1:#10101c;--s2:#18182a;--s3:#20203a;
+  --border:#26263a;--border2:#38385a;
+  --gold:#fbbf24;--gold-dim:rgba(251,191,36,0.13);
+  --rose:#fb7185;--teal:#2dd4bf;--teal-dim:rgba(45,212,191,0.12);
+  --green:#4ade80;--green-dim:rgba(74,222,128,0.12);
+  --text:#e2e2f0;--text2:#8080a8;--r:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);
+  display:flex;flex-direction:column;height:100dvh}
+
+/* ── HEADER ── */
+header{flex-shrink:0;display:flex;align-items:center;gap:10px;
+  padding:11px 14px;background:var(--s1);border-bottom:1px solid var(--border);}
+.logo-wrap{display:flex;flex-direction:column;line-height:1.2;}
+.logo{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;
+  background:linear-gradient(110deg,var(--gold),var(--rose));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.logo-date{font-family:'Geist Mono',monospace;font-size:9px;color:var(--text2);
+  letter-spacing:.6px;text-transform:uppercase;margin-top:1px;}
+.badge{font-family:'Geist Mono',monospace;font-size:11px;color:var(--text2);
+  background:var(--s2);border:1px solid var(--border);border-radius:20px;padding:3px 9px;white-space:nowrap;}
+.spacer{flex:1}
+.hbtn{width:38px;height:38px;border-radius:var(--r);border:1px solid var(--border);
+  background:var(--s2);color:var(--text2);cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+.hbtn:hover{border-color:var(--gold);color:var(--gold)}
+.hbtn:active{transform:scale(.9)}
+.hbtn.export-btn{border-color:var(--border2);color:var(--text);}
+.hbtn.export-btn:hover{border-color:var(--teal);color:var(--teal);}
+.hbtn.spin svg{animation:spin .65s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── STATUS ── */
+#status{flex-shrink:0;font-size:13px;font-weight:600;text-align:center;
+  max-height:0;overflow:hidden;transition:max-height .2s,padding .2s;}
+#status.show{max-height:32px;padding:7px 0}
+#status.err{background:rgba(251,113,133,.1);color:var(--rose)}
+#status.ok{background:rgba(45,212,191,.08);color:var(--teal)}
+#status.inf{background:rgba(251,191,36,.07);color:var(--gold)}
+
+/* ── COLUMN HEADS ── */
+.col-head{flex-shrink:0;display:grid;
+  grid-template-columns:44px 1fr 1fr 80px 62px;
+  padding:0 10px;height:30px;align-items:center;
+  background:var(--s1);border-bottom:1px solid var(--border);}
+.ch{font-size:10px;font-weight:700;color:var(--text2);
+  text-transform:uppercase;letter-spacing:.7px;padding:0 4px;}
+
+/* ── SCROLL BODY ── */
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;}
+
+/* ── ROW ── */
+.row{display:grid;
+  grid-template-columns:44px 1fr 1fr 80px 62px;
+  min-height:46px;border-bottom:1px solid var(--border);
+  background:var(--s1);align-items:stretch;position:relative;
+  transition:background .12s;}
+.row:hover:not(.editing){background:var(--s2)}
+.row.editing{background:var(--s2);
+  box-shadow:inset 2px 0 0 var(--gold),inset 0 -1px 0 rgba(251,191,36,.2);}
+.row.dragging{opacity:.3}
+.row.drag-over{border-top:2px solid var(--teal)}
+
+/* cells */
+.cell{display:flex;align-items:center;padding:0 5px;min-width:0;overflow:hidden;}
+.c-num{justify-content:center;align-items:center;
+  font-family:'Geist Mono',monospace;font-size:11px;color:var(--border2);
+  cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;
+  flex-direction:column;gap:1px;}
+.row.editing .c-num{cursor:default;color:rgba(251,191,36,.4);}
+.drag-icon{font-size:13px;line-height:1;color:var(--border2);}
+.row-num{font-size:10px;font-family:'Geist Mono',monospace;color:var(--text2);line-height:1;}
+
+.c-name{font-size:15px;font-weight:500;}
+.c-name .dv{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;}
+.c-name input{width:100%;background:transparent;border:none;outline:none;
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;}
+
+.c-singers{font-size:13px;flex-wrap:wrap;gap:3px;cursor:default;}
+.row.editing .c-singers{cursor:pointer;}
+.stag{background:var(--gold-dim);color:var(--gold);border-radius:4px;
+  padding:2px 6px;font-size:11px;font-weight:600;white-space:nowrap;}
+.no-val{color:var(--border2);font-size:11px;}
+
+.c-link{font-size:12px;}
+.link-cell-wrap{display:flex;flex-direction:column;gap:3px;justify-content:center;}
+.play-btn{display:inline-flex;align-items:center;gap:4px;
+  background:var(--teal-dim);color:var(--teal);border:1px solid rgba(45,212,191,.25);
+  border-radius:6px;padding:3px 7px;font-size:11px;font-weight:600;
+  cursor:pointer;white-space:nowrap;transition:all .15s;font-family:'DM Sans',sans-serif;}
+.play-btn:hover{background:rgba(45,212,191,.2);}
+.play-btn:active{transform:scale(.95);}
+.play-btn.offline{background:rgba(74,222,128,.1);color:var(--green);border-color:rgba(74,222,128,.25);}
+.offline-row{display:flex;align-items:center;gap:4px;}
+.dl-btn{display:inline-flex;align-items:center;gap:3px;
+  background:transparent;border:none;color:var(--text2);font-size:10px;font-weight:600;
+  cursor:pointer;font-family:'DM Sans',sans-serif;padding:0;white-space:nowrap;transition:color .15s;}
+.dl-btn:hover{color:var(--gold);}
+.dl-btn.cached{color:var(--green);}
+.dl-progress{font-size:10px;color:var(--gold);}
+/* Edit row link area */
+.link-edit-wrap{display:flex;flex-direction:column;gap:4px;width:100%;padding:4px 0;}
+.link-edit-wrap input{width:100%;background:transparent;border:none;outline:none;
+  color:var(--teal);font-family:'DM Sans',sans-serif;font-size:11px;min-width:0;}
+.upload-row{display:flex;align-items:center;gap:5px;}
+.upload-label{display:inline-flex;align-items:center;gap:4px;
+  font-size:10px;font-weight:600;color:var(--text2);cursor:pointer;
+  background:var(--s3);border:1px solid var(--border2);border-radius:5px;
+  padding:3px 7px;white-space:nowrap;transition:all .15s;flex-shrink:0;}
+.upload-label:hover{border-color:var(--gold);color:var(--gold);}
+.upload-label input[type=file]{display:none;}
+.upload-progress{font-size:10px;color:var(--gold);white-space:nowrap;}
+.c-link .no-val{color:var(--border2);font-size:11px;}
+
+/* ── PLAYER MODAL ── */
+#player-overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);
+  z-index:400;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  opacity:0;pointer-events:none;transition:opacity .25s;}
+#player-overlay.open{opacity:1;pointer-events:all;}
+#player-modal{background:var(--s2);border-radius:22px 22px 0 0;
+  width:100%;max-width:600px;padding:0 0 40px;
+  border-top:1px solid var(--border2);
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);}
+#player-overlay.open #player-modal{transform:translateY(0);}
+.pm-handle{width:38px;height:4px;background:var(--border2);border-radius:2px;margin:14px auto 0;}
+.pm-header{display:flex;align-items:flex-start;justify-content:space-between;
+  padding:14px 18px 12px;}
+.pm-info{}
+.pm-title{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;color:var(--text);
+  margin-bottom:3px;line-height:1.2;}
+.pm-singers{font-size:12px;color:var(--gold);}
+.pm-close{width:32px;height:32px;border-radius:8px;border:1px solid var(--border2);
+  background:var(--s3);color:var(--text2);font-size:18px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s;}
+.pm-close:hover{border-color:var(--rose);color:var(--rose);}
+.pm-body{padding:0 18px;}
+/* YouTube / video container */
+.pm-video-wrap{position:relative;width:100%;border-radius:12px;overflow:hidden;
+  background:#000;aspect-ratio:16/9;}
+.pm-video-wrap iframe,.pm-video-wrap video{width:100%;height:100%;display:block;border:none;}
+/* Audio player */
+.pm-audio-wrap{padding:10px 0;}
+.pm-audio-wrap audio{width:100%;border-radius:10px;outline:none;}
+/* Fallback open-link */
+.pm-fallback{display:flex;flex-direction:column;align-items:center;gap:12px;padding:20px 0;}
+.pm-fallback-ico{font-size:40px;opacity:.5;}
+.pm-fallback-txt{font-size:13px;color:var(--text2);text-align:center;}
+.pm-open-link{display:inline-flex;align-items:center;gap:6px;padding:11px 20px;
+  border-radius:10px;background:var(--teal-dim);border:1px solid rgba(45,212,191,.3);
+  color:var(--teal);font-size:14px;font-weight:600;text-decoration:none;cursor:pointer;
+  font-family:'DM Sans',sans-serif;transition:all .15s;}
+.pm-open-link:hover{background:rgba(45,212,191,.2);}
+
+.c-act{justify-content:center;gap:4px;padding:0 4px;}
+.ab{width:28px;height:28px;border-radius:6px;border:none;background:transparent;
+  color:var(--text2);font-size:17px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all .12s;flex-shrink:0;}
+.ab:active{transform:scale(.88)}
+.ab.save{color:var(--teal);}
+.ab.save:hover{background:var(--teal-dim);}
+.ab.del:hover{background:rgba(251,113,133,.1);color:var(--rose)}
+.ab.edit:hover{color:var(--gold)}
+.ab.cancel:hover{color:var(--rose)}
+
+/* ── ADD ROW BUTTON ── */
+.add-btn{display:none;width:100%;padding:12px 14px;
+  background:transparent;border:none;border-bottom:1px solid var(--border);
+  color:var(--text2);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;
+  cursor:pointer;text-align:left;transition:color .15s;}
+.add-btn:hover{color:var(--gold)}
+.add-btn .plus{font-size:18px;margin-right:8px;vertical-align:middle;}
+
+/* ── SINGER POPUP ── */
+#spop{position:fixed;z-index:200;
+  background:var(--s2);border:1px solid var(--border2);border-radius:12px;
+  padding:10px;box-shadow:0 8px 36px rgba(0,0,0,.75);display:none;}
+.spop-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.sc{padding:10px 12px;border-radius:7px;border:1px solid var(--border);
+  background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;
+  font-size:14px;font-weight:500;cursor:pointer;text-align:center;transition:all .12s;}
+.sc.on{background:var(--gold-dim);border-color:var(--gold);color:var(--gold);font-weight:700}
+.sc:hover:not(.on){background:var(--s3)}
+.sdone{margin-top:6px;width:100%;padding:10px;border-radius:7px;border:none;
+  background:linear-gradient(90deg,var(--gold),#f59e0b);
+  color:#080810;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;cursor:pointer;}
+
+/* ── EXPORT MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);
+  z-index:300;display:flex;align-items:flex-end;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .25s;}
+.overlay.open{opacity:1;pointer-events:all;}
+.modal{background:var(--s2);border-radius:22px 22px 0 0;
+  padding:20px 18px 40px;width:100%;max-width:500px;
+  border-top:1px solid var(--border2);
+  transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);}
+.overlay.open .modal{transform:translateY(0);}
+.m-handle{width:38px;height:4px;background:var(--border2);border-radius:2px;margin:0 auto 18px;}
+.m-title{font-family:'Syne',sans-serif;font-size:19px;font-weight:800;color:var(--gold);margin-bottom:4px;}
+.m-sub{font-size:13px;color:var(--text2);margin-bottom:20px;}
+
+.exp-opt{width:100%;display:flex;align-items:center;gap:14px;
+  padding:16px;border-radius:12px;border:1px solid var(--border2);
+  background:var(--s3);cursor:pointer;transition:all .15s;
+  margin-bottom:10px;text-align:left;font-family:'DM Sans',sans-serif;}
+.exp-opt:hover{border-color:var(--gold);background:rgba(251,191,36,.04);}
+.exp-opt:active{transform:scale(.98);}
+.exp-opt.drive:hover{border-color:var(--green);}
+.eico{font-size:28px;flex-shrink:0;width:36px;text-align:center;}
+.etxt{}
+.elabel{font-size:15px;font-weight:600;color:var(--text);display:block;margin-bottom:2px;}
+.edesc{font-size:12px;color:var(--text2);}
+.m-cancel{width:100%;padding:14px;border-radius:10px;border:1px solid var(--border);
+  background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;
+  font-size:14px;cursor:pointer;margin-top:4px;transition:all .15s;}
+.m-cancel:hover{color:var(--rose);border-color:rgba(251,113,133,.3);}
+
+/* Drive sign-in note */
+.drive-note{font-size:11px;color:var(--text2);text-align:center;margin-top:10px;line-height:1.5;}
+.drive-note a{color:var(--teal);}
+
+/* ── EMPTY / LOADING ── */
+.empty,.loading{display:flex;flex-direction:column;align-items:center;
+  justify-content:center;height:160px;gap:6px;color:var(--text2);}
+.ei{font-size:34px;opacity:.45}
+.et{font-size:14px;font-weight:500;color:var(--text)}
+.es{font-size:12px}
+.dspin{width:6px;height:6px;border-radius:50%;background:var(--gold);
+  animation:db .7s ease-in-out infinite alternate}
+@keyframes db{from{opacity:.2;transform:scale(.5)}to{opacity:1;transform:scale(1.3)}}
+
+/* ── FOOTER ── */
+footer{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;
+  padding:6px 14px;background:var(--s1);border-top:1px solid var(--border);
+  font-size:10px;color:var(--text2);font-family:'Geist Mono',monospace;}
+
+@media(max-width:400px){
+  .col-head,.row{grid-template-columns:40px 1fr 1fr 72px 58px}
+  .c-name input,.c-name .dv{font-size:14px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-wrap">
+    <span class="logo">🎤 Sparsh</span>
+    <span class="logo-date">June 13th, 2026</span>
+  </div>
+  <span class="badge" id="hcount">— songs</span>
+  <div class="spacer"></div>
+  <!-- Export button -->
+  <button class="hbtn export-btn" title="Export" onclick="openExport()">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+      <polyline points="7 10 12 15 17 10"/>
+      <line x1="12" y1="15" x2="12" y2="3"/>
+    </svg>
+  </button>
+  <!-- Refresh button -->
+  <button class="hbtn" id="rbtn" title="Refresh" onclick="doRefresh()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+    </svg>
+  </button>
+</header>
+
+<div id="status"></div>
+
+<div class="col-head">
+  <div class="ch" style="text-align:center">⠿</div>
+  <div class="ch" style="padding-left:5px">Song Name</div>
+  <div class="ch" style="padding-left:5px">Singer(s)</div>
+  <div class="ch" style="padding-left:5px">Karaoke</div>
+  <div class="ch"></div>
+</div>
+
+<div class="scroll" id="scroll">
+  <div id="body">
+    <div class="loading"><div class="dspin"></div><span style="font-size:13px">Connecting…</span></div>
+  </div>
+  <button class="add-btn" id="addbtn" onclick="addRow()">
+    <span class="plus">+</span> Add Song
+  </button>
+</div>
+
+<footer>
+  <span>sparsh · cousins' setlist</span>
+  <span id="fdb">● connecting</span>
+</footer>
+
+<!-- Player modal -->
+<div id="player-overlay" onclick="handlePlayerOverlay(event)">
+  <div id="player-modal">
+    <div class="pm-handle"></div>
+    <div class="pm-header">
+      <div class="pm-info">
+        <div class="pm-title" id="pm-title">Song Name</div>
+        <div class="pm-singers" id="pm-singers"></div>
+      </div>
+      <button class="pm-close" onclick="closePlayer()">✕</button>
+    </div>
+    <div class="pm-body" id="pm-body"></div>
+  </div>
+</div>
+
+<!-- Singer popup -->
+<div id="spop">
+  <div class="spop-grid" id="spop-grid"></div>
+  <button class="sdone" onclick="closePop()">Done ✓</button>
+</div>
+
+<!-- Export modal -->
+<div class="overlay" id="exp-overlay" onclick="handleOverlayClick(event)">
+  <div class="modal">
+    <div class="m-handle"></div>
+    <div class="m-title">Export Setlist</div>
+    <div class="m-sub">Save your song list as an Excel file</div>
+
+    <button class="exp-opt" onclick="exportExcel()">
+      <span class="eico">📊</span>
+      <span class="etxt">
+        <span class="elabel">Download as Excel</span>
+        <span class="edesc">Saves Sparsh_Setlist.xlsx to your device</span>
+      </span>
+    </button>
+
+    <button class="exp-opt drive" onclick="exportToDrive()">
+      <span class="eico">☁️</span>
+      <span class="etxt">
+        <span class="elabel">Upload to Google Drive</span>
+        <span class="edesc">Signs in with Google and uploads to your Drive</span>
+      </span>
+    </button>
+
+    <button class="m-cancel" onclick="closeExport()">Cancel</button>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ──────────────────────────────────────
+const SUPABASE_URL = 'https://afnxggkjsxezrbhnntwl.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_YenvzolmYET7XAJF_4M9Ag_yJH2AdRG';
+const TABLE        = 'setlist_songs';
+const COUSINS      = ['Ravi','Soujanya','Soumya','Sravan','Saradhi','Harini','Ananya','Maanya'];
+const FILE_NAME    = 'Sparsh_Setlist_June13.xlsx';
+const GAPI_CLIENT_ID = '';
+const GAPI_API_KEY   = '';
+// ────────────────────────────────────────────────
+
+// ── SUPABASE CLIENT ──────────────────────────────
+let db;
+function initDB(){
+  db = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+    auth:{ persistSession:false, autoRefreshToken:false }
+  });
+}
+// ─────────────────────────────────────────────────
+
+let songs = [], editState = {}, popTarget = null;
+let dragSrcId = null, touchSrcId = null, touchClone = null;
+
+// ── OFFLINE CACHE (IndexedDB) — fully non-blocking ──
+const DB_NAME = 'sparsh-offline', DB_VER = 1, STORE = 'blobs';
+let idb = null;
+const offlineCache = new Map();
+
+// Open IDB in background — never awaited from init
+function initIDB(){
+  try{
+    const req = indexedDB.open(DB_NAME, DB_VER);
+    req.onupgradeneeded = e => e.target.result.createObjectStore(STORE, {keyPath:'id'});
+    req.onsuccess = e => {
+      idb = e.target.result;
+      // Load cached blobs into memory after IDB opens
+      try{
+        const tx  = idb.transaction(STORE,'readonly');
+        const req2 = tx.objectStore(STORE).getAll();
+        req2.onsuccess = ev => {
+          (ev.target.result||[]).forEach(rec=>{
+            if(rec.id==='__songlist__') return; // skip song list record
+            try{
+              const url = URL.createObjectURL(rec.blob);
+              offlineCache.set(rec.id, {blob:rec.blob, mimeType:rec.mimeType, objectUrl:url});
+            } catch(_){}
+          });
+          // Re-render rows so offline badges show up
+          if(songs.length) render();
+        };
+      } catch(_){}
+    };
+    req.onerror = e => console.warn('IDB open failed:', e.target.error);
+  } catch(e){ console.warn('IDB not available:', e); }
+}
+
+function idbPut(record){
+  if(!idb) return; // silently skip if IDB not ready
+  try{
+    const tx = idb.transaction(STORE,'readwrite');
+    tx.objectStore(STORE).put(record);
+  } catch(e){ console.warn('idbPut failed:', e); }
+}
+
+function idbGet(id){
+  return new Promise(res=>{
+    if(!idb){ res(null); return; }
+    try{
+      const tx  = idb.transaction(STORE,'readonly');
+      const req = tx.objectStore(STORE).get(id);
+      req.onsuccess = e => res(e.target.result || null);
+      req.onerror   = ()=> res(null);
+    } catch(_){ res(null); }
+  });
+}
+
+async function cacheForOffline(songId){
+  const song = songs.find(s=>s.id===songId);
+  if(!song?.karaoke_link){ toast('No link to download','err'); return; }
+
+  // YouTube / Google Drive can't be downloaded as binary from browser — inform user
+  if(getYouTubeId(song.karaoke_link)){
+    toast('YouTube videos can\'t be saved offline — use a direct audio/video file or Supabase upload','inf');
+    return;
+  }
+  if(getGDriveEmbed(song.karaoke_link)){
+    toast('Drive links can\'t be saved offline — download the file and re-upload via the edit button','inf');
+    return;
+  }
+
+  const btn = document.getElementById('dlbtn-'+songId);
+  if(btn) btn.textContent = '⏳ Downloading…';
+
+  try{
+    const resp = await fetch(song.karaoke_link);
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const mimeType = resp.headers.get('content-type') || 'audio/mpeg';
+    const blob = await resp.blob();
+    idbPut({id:songId, blob, mimeType}); // non-blocking
+    const objectUrl = URL.createObjectURL(blob);
+    if(offlineCache.has(songId)) URL.revokeObjectURL(offlineCache.get(songId).objectUrl);
+    offlineCache.set(songId, {blob, mimeType, objectUrl});
+    // Re-render just this row
+    const idx = songs.findIndex(s=>s.id===songId);
+    if(idx>=0){ const old=document.querySelector(`.row[data-id="${songId}"]`); if(old) old.replaceWith(mkRow(songs[idx],idx)); bindDrag(); }
+    toast('✓ Saved for offline playback!','ok');
+  } catch(e){
+    if(btn) btn.textContent = '⬇ Save offline';
+    toast('Download failed: '+e.message,'err');
+  }
+}
+
+// ── INIT ─────────────────────────────────────────
+function init(){
+  initDB();
+  initIDB(); // fire and forget
+  load();
+}
+
+async function load(){
+  setFdb('...');
+  try{
+    const timeout = new Promise((_,rej)=>setTimeout(()=>rej(new Error('Timed out')),8000));
+    const {data,error} = await Promise.race([
+      db.from(TABLE).select('*').order('sort_order',{ascending:true}),
+      timeout
+    ]);
+    if(error) throw error;
+    songs = data||[];
+    idbPut({id:'__songlist__', blob:new Blob([JSON.stringify(songs)],{type:'application/json'}), mimeType:'application/json'});
+    setFdb('ok');
+    render();
+  } catch(e){
+    console.error('Load error:',e);
+    const cached = await idbGet('__songlist__');
+    if(cached){
+      try{ songs=JSON.parse(await cached.blob.text()); setFdb('offline'); render(); toast('⚠ Offline — cached setlist','inf'); }
+      catch(_){ setFdb('err'); showConnError(e.message); }
+    } else { setFdb('err'); showConnError(e.message); }
+  }
+}
+
+function showConnError(msg){
+  document.getElementById('body').innerHTML=`
+    <div class="empty">
+      <div class="ei">⚠️</div>
+      <div class="et">Could not connect</div>
+      <div class="es" style="max-width:260px;text-align:center;line-height:1.5">${msg}</div>
+      <button onclick="doRefresh()" style="margin-top:14px;padding:10px 22px;border-radius:9px;
+        border:1px solid var(--border2);background:var(--s2);color:var(--gold);
+        font-family:'DM Sans',sans-serif;font-size:14px;cursor:pointer;">↺ Retry</button>
+    </div>`;
+  document.getElementById('addbtn').style.display='none';
+}
+
+async function doRefresh(){
+  document.getElementById('rbtn').classList.add('spin');
+  await load();
+  setTimeout(()=>document.getElementById('rbtn').classList.remove('spin'),700);
+}
+
+// ── RENDER ───────────────────────────────────────
+function render(){
+  const b  = document.getElementById('body');
+  const ab = document.getElementById('addbtn');
+  ab.style.display = 'block';
+  document.getElementById('hcount').textContent = songs.length+(songs.length===1?' song':' songs');
+
+  if(!songs.length){
+    b.innerHTML=`<div class="empty"><div class="ei">🎵</div><div class="et">No songs yet</div><div class="es">Tap "+ Add Song" to begin</div></div>`;
+    return;
+  }
+  b.innerHTML='';
+  songs.forEach((s,i)=>b.appendChild(mkRow(s,i)));
+  bindDrag();
+}
+
+function mkRow(song,i){
+  const ed   = editState[song.id];
+  const isEd = !!ed;
+  const div  = document.createElement('div');
+  div.className = 'row'+(isEd?' editing':'');
+  div.dataset.id  = song.id;
+  div.dataset.idx = i;
+  if(!isEd) div.draggable = true;
+
+  const singers = isEd ? ed.singers : (song.singers||[]);
+  const name    = isEd ? ed.name    : song.name;
+  const link    = isEd ? ed.link    : (song.karaoke_link||'');
+
+  const singerHtml = singers.length
+    ? singers.map(s=>`<span class="stag">${x(s)}</span>`).join('')
+    : `<span class="no-val">${isEd?'Tap to pick':'—'}</span>`;
+
+  if(isEd){
+    div.innerHTML=`
+      <div class="cell c-num">${i+1}</div>
+      <div class="cell c-name">
+        <input id="n-${song.id}" type="text" value="${x(name)}" placeholder="Song name" autocomplete="off" spellcheck="false">
+      </div>
+      <div class="cell c-singers" id="sc-${song.id}" title="Tap to select singers">${singerHtml}</div>
+      <div class="cell c-link">
+        <div class="link-edit-wrap">
+          <input id="l-${song.id}" type="url" value="${x(link)}" placeholder="Paste URL or upload ↓" autocomplete="off">
+          <div class="upload-row">
+            <label class="upload-label">
+              📁 Upload
+              <input type="file" accept="audio/*,video/*" onchange="uploadFile(event,'${song.id}')">
+            </label>
+            <span class="upload-progress" id="up-${song.id}"></span>
+          </div>
+        </div>
+      </div>
+      <div class="cell c-act">
+        <button class="ab save" title="Save (Enter)" onclick="saveRow('${song.id}')">✓</button>
+        <button class="ab cancel" title="Cancel (Esc)" onclick="cancelRow('${song.id}')">✕</button>
+      </div>`;
+    div.querySelector(`#sc-${song.id}`).onclick = e=>{
+      e.stopPropagation();
+      openPop(song.id, div.querySelector(`#sc-${song.id}`));
+    };
+  } else {
+    const isCached = offlineCache.has(song.id);
+    const linkHtml = link ? `
+      <div class="link-cell-wrap">
+        <button class="play-btn${isCached?' offline':''}" onclick="openPlayer('${song.id}')">
+          ${isCached ? '📲' : '▶'} Play${isCached ? ' (offline)' : ''}
+        </button>
+        <div class="offline-row">
+          <button class="dl-btn${isCached?' cached':''}" id="dlbtn-${song.id}"
+            onclick="cacheForOffline('${song.id}')"
+            title="${isCached?'Cached for offline — tap to re-download':'Download for offline playback'}">
+            ${isCached ? '✓ Offline ready' : '⬇ Save offline'}
+          </button>
+        </div>
+      </div>` : `<span class="no-val">—</span>`;
+    div.innerHTML=`
+      <div class="cell c-num" title="Drag to reorder">
+        <span class="drag-icon">⠿</span>
+        <span class="row-num">${i+1}</span>
+      </div>
+      <div class="cell c-name"><span class="dv">${x(name)}</span></div>
+      <div class="cell c-singers">${singerHtml}</div>
+      <div class="cell c-link">${linkHtml}</div>
+      <div class="cell c-act">
+        <button class="ab edit" title="Edit" onclick="startEdit('${song.id}')">✎</button>
+        <button class="ab del"  title="Delete" onclick="delRow('${song.id}')">✕</button>
+      </div>`;
+  }
+  return div;
+}
+
+function rerenderRow(id){
+  const idx = songs.findIndex(s=>s.id===id);
+  if(idx<0) return;
+  const old = document.querySelector(`.row[data-id="${id}"]`);
+  if(old) old.replaceWith(mkRow(songs[idx],idx));
+  bindDrag();
+}
+
+// ── EDIT ─────────────────────────────────────────
+function startEdit(id){
+  closePop();
+  const s = songs.find(s=>s.id===id);
+  if(!s) return;
+  editState[id]={name:s.name, singers:[...(s.singers||[])], link:s.karaoke_link||''};
+  rerenderRow(id);
+  setTimeout(()=>{const n=document.getElementById('n-'+id);if(n){n.focus();n.select();}},40);
+}
+
+function cancelRow(id){
+  closePop();
+  const s = songs.find(s=>s.id===id);
+  if(s&&s._new){ songs=songs.filter(s=>s.id!==id); render(); }
+  else{ delete editState[id]; rerenderRow(id); }
+}
+
+async function saveRow(id){
+  closePop();
+  const ed = editState[id]; if(!ed) return;
+  const ni   = document.getElementById('n-'+id);
+  const li   = document.getElementById('l-'+id);
+  const name = ni ? ni.value.trim() : ed.name;
+  const link = li ? li.value.trim() : ed.link;
+  if(!name){ toast('Song name required','err'); ni&&ni.focus(); return; }
+
+  const s = songs.find(s=>s.id===id);
+  try{
+    if(s&&s._new){
+      const maxO = songs.filter(s=>!s._new).reduce((m,s)=>Math.max(m,s.sort_order||0),-1);
+      const {error} = await db.from(TABLE).insert({name, singers:ed.singers, karaoke_link:link, sort_order:maxO+1});
+      if(error) throw error;
+      delete editState[id];
+      await load(); toast('Song added ✓','ok');
+    } else {
+      const {error} = await db.from(TABLE).update({name, singers:ed.singers, karaoke_link:link}).eq('id',id);
+      if(error) throw error;
+      const s2=songs.find(s=>s.id===id);
+      if(s2){s2.name=name;s2.singers=ed.singers;s2.karaoke_link=link;}
+      delete editState[id];
+      rerenderRow(id); toast('Saved ✓','ok');
+    }
+  } catch(e){ toast('Error: '+e.message,'err'); }
+}
+
+async function delRow(id){
+  const s=songs.find(s=>s.id===id);
+  if(!confirm(`Delete "${s?.name||'this song'}"?`)) return;
+  try{
+    const {error} = await db.from(TABLE).delete().eq('id',id);
+    if(error) throw error;
+    songs=songs.filter(s=>s.id!==id);
+    render(); toast('Deleted','inf');
+  } catch(e){ toast('Error: '+e.message,'err'); }
+}
+
+// ── ADD NEW ───────────────────────────────────────
+function addRow(){
+  closePop();
+  const tid = 'new-'+Date.now();
+  const ns  = {id:tid, name:'', singers:[], karaoke_link:'', sort_order:999, _new:true};
+  songs.push(ns);
+  editState[tid] = {name:'', singers:[], link:''};
+  const b   = document.getElementById('body');
+  const emp = b.querySelector('.empty');
+  if(emp) emp.remove();
+  const row = mkRow(ns, songs.length-1);
+  b.appendChild(row);
+  row.scrollIntoView({behavior:'smooth',block:'nearest'});
+  setTimeout(()=>{const n=document.getElementById('n-'+tid);if(n)n.focus();},80);
+}
+
+// ── SINGER POPUP ──────────────────────────────────
+function openPop(rowId, anchor){
+  if(popTarget===rowId){closePop();return;}
+  popTarget = rowId;
+  const pop  = document.getElementById('spop');
+  const grid = document.getElementById('spop-grid');
+  grid.innerHTML = '';
+  const sel = editState[rowId]?.singers||[];
+  COUSINS.forEach(name=>{
+    const b = document.createElement('button');
+    b.className = 'sc'+(sel.includes(name)?' on':'');
+    b.textContent = name;
+    b.onclick = e=>{e.stopPropagation(); toggleSinger(rowId,name,b);};
+    grid.appendChild(b);
+  });
+  pop.style.display = 'block';
+  const rect = anchor.getBoundingClientRect();
+  const pw=210, ph=220;
+  let top  = rect.bottom+4, left = rect.left;
+  if(top+ph>window.innerHeight) top = rect.top-ph-4;
+  if(left+pw>window.innerWidth) left = window.innerWidth-pw-8;
+  if(left<4) left=4;
+  pop.style.top=top+'px'; pop.style.left=left+'px'; pop.style.width=pw+'px';
+}
+
+function toggleSinger(rowId,name,chip){
+  if(!editState[rowId]) return;
+  const arr = editState[rowId].singers;
+  if(arr.includes(name)){ editState[rowId].singers=arr.filter(s=>s!==name); chip.classList.remove('on'); }
+  else{ arr.push(name); chip.classList.add('on'); }
+  const cell = document.getElementById('sc-'+rowId);
+  if(cell){
+    const s = editState[rowId].singers;
+    cell.innerHTML = s.length
+      ? s.map(n=>`<span class="stag">${x(n)}</span>`).join('')
+      : '<span class="no-val">Tap to pick</span>';
+    cell.onclick = e=>{e.stopPropagation(); openPop(rowId,cell);};
+  }
+}
+
+function closePop(){
+  popTarget = null;
+  document.getElementById('spop').style.display = 'none';
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#spop')&&!e.target.closest('[id^="sc-"]')) closePop();
+});
+
+// ── KEYBOARD ──────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  const ids = Object.keys(editState);
+  if(!ids.length) return;
+  const id = ids[ids.length-1];
+  if(e.key==='Enter'){e.preventDefault(); saveRow(id);}
+  if(e.key==='Escape') cancelRow(id);
+});
+
+// ── DRAG & DROP ───────────────────────────────────
+function bindDrag(){
+  document.querySelectorAll('.row:not(.editing)').forEach(row=>{
+    row.ondragstart = e=>{dragSrcId=row.dataset.id; row.classList.add('dragging'); e.dataTransfer.effectAllowed='move';};
+    row.ondragover  = e=>{e.preventDefault(); document.querySelectorAll('.row').forEach(r=>r.classList.remove('drag-over')); row.classList.add('drag-over');};
+    row.ondrop      = e=>{e.preventDefault(); doReorder(dragSrcId,row.dataset.id);};
+    row.ondragend   = ()=>{document.querySelectorAll('.row').forEach(r=>r.classList.remove('dragging','drag-over')); dragSrcId=null;};
+    const h = row.querySelector('.c-num');
+    if(h) h.ontouchstart = e=>{e.preventDefault(); startTouch(e,row);};
+  });
+}
+
+function startTouch(e,row){
+  touchSrcId = row.dataset.id;
+  const rect = row.getBoundingClientRect();
+  touchClone = row.cloneNode(true);
+  touchClone.style.cssText=`position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;
+    opacity:.7;z-index:999;pointer-events:none;border-color:var(--teal);box-shadow:0 6px 24px rgba(0,0,0,.6);`;
+  document.body.appendChild(touchClone);
+  row.classList.add('dragging');
+  document.ontouchmove = ev=>{
+    ev.preventDefault();
+    const t = ev.touches[0];
+    touchClone.style.top=(t.clientY-rect.height/2)+'px';
+    touchClone.style.display='none';
+    const under = document.elementFromPoint(t.clientX,t.clientY);
+    touchClone.style.display='';
+    document.querySelectorAll('.row').forEach(r=>r.classList.remove('drag-over'));
+    const ov = under?.closest('.row');
+    if(ov&&ov.dataset.id!==touchSrcId) ov.classList.add('drag-over');
+  };
+  document.ontouchend = ev=>{
+    const t = ev.changedTouches[0];
+    if(touchClone){touchClone.remove(); touchClone=null;}
+    document.querySelectorAll('.row').forEach(r=>r.classList.remove('dragging','drag-over'));
+    const under = document.elementFromPoint(t.clientX,t.clientY);
+    const ov = under?.closest('.row');
+    if(ov&&ov.dataset.id!==touchSrcId) doReorder(touchSrcId,ov.dataset.id);
+    touchSrcId=null; document.ontouchmove=null; document.ontouchend=null;
+  };
+}
+
+async function doReorder(srcId,dstId){
+  if(!srcId||!dstId||srcId===dstId) return;
+  const si=songs.findIndex(s=>s.id===srcId);
+  const di=songs.findIndex(s=>s.id===dstId);
+  if(si<0||di<0) return;
+  const [mv]=songs.splice(si,1); songs.splice(di,0,mv);
+  songs.forEach((s,i)=>s.sort_order=i);
+  render();
+  try{
+    for(const s of songs) await db.from(TABLE).update({sort_order:s.sort_order}).eq('id',s.id);
+  } catch(e){ toast('Reorder failed: '+e.message,'err'); }
+}
+
+// ── FILE UPLOAD TO SUPABASE STORAGE ──────────────
+const BUCKET = 'karaoke-files';
+
+async function uploadFile(event, rowId){
+  const file = event.target.files[0];
+  if(!file) return;
+  const prog=document.getElementById('up-'+rowId);
+  const linkInp=document.getElementById('l-'+rowId);
+  if(prog) prog.textContent='Uploading…';
+  const safe=file.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+  const path=`${Date.now()}_${safe}`;
+  try{
+    const {error:upErr} = await db.storage.from(BUCKET).upload(path, file, {upsert:true, contentType:file.type});
+    if(upErr) throw upErr;
+    const {data} = db.storage.from(BUCKET).getPublicUrl(path);
+    const publicUrl = data.publicUrl;
+    if(linkInp) linkInp.value=publicUrl;
+    if(editState[rowId]) editState[rowId].link=publicUrl;
+    if(prog) prog.textContent='✓ Uploaded!';
+    setTimeout(()=>{ if(prog) prog.textContent=''; },2500);
+    toast('File uploaded ✓ — tap ✓ to save','ok');
+  } catch(err){
+    if(prog) prog.textContent='✗ Failed';
+    toast('Upload error: '+err.message,'err');
+  }
+  event.target.value='';
+}
+
+// ── PLAYER ───────────────────────────────────────
+function openPlayer(id){
+  const song = songs.find(s=>s.id===id);
+  if(!song?.karaoke_link) return;
+
+  document.getElementById('pm-title').textContent   = song.name||'';
+  document.getElementById('pm-singers').textContent = (song.singers||[]).join(' · ');
+
+  const body = document.getElementById('pm-body');
+  body.innerHTML = '';
+
+  // ── Check offline cache first ──
+  const cached = offlineCache.get(id);
+  if(cached){
+    const isVid = cached.mimeType.startsWith('video');
+    const wrap  = document.createElement('div');
+    const badge = document.createElement('div');
+    badge.style.cssText='font-size:10px;color:var(--green);text-align:center;margin-bottom:6px;font-weight:600;';
+    badge.textContent='📲 Playing offline (cached)';
+    body.appendChild(badge);
+    if(isVid){
+      wrap.className='pm-video-wrap';
+      const vid=document.createElement('video');
+      vid.src=cached.objectUrl; vid.controls=true; vid.autoplay=true;
+      wrap.appendChild(vid);
+    } else {
+      wrap.className='pm-audio-wrap';
+      const aud=document.createElement('audio');
+      aud.src=cached.objectUrl; aud.controls=true; aud.autoplay=true;
+      wrap.appendChild(aud);
+    }
+    body.appendChild(wrap);
+    document.getElementById('player-overlay').classList.add('open');
+    return;
+  }
+
+  // ── Online playback ──
+  const url = song.karaoke_link.trim();
+
+  document.getElementById('pm-title').textContent   = song.name||'';
+  document.getElementById('pm-singers').textContent = (song.singers||[]).join(' · ');
+
+  const body = document.getElementById('pm-body');
+  body.innerHTML = '';
+
+  const ytId   = getYouTubeId(url);
+  const gdrive = getGDriveEmbed(url);
+  const mediaType = guessMediaType(url);
+
+  if(ytId){
+    // YouTube embed — with fallback if video owner disabled embedding
+    const wrap = document.createElement('div');
+    wrap.className = 'pm-video-wrap';
+    wrap.style.position = 'relative';
+
+    const iframe = document.createElement('iframe');
+    iframe.src = `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0`;
+    iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+    iframe.allowFullscreen = true;
+    wrap.appendChild(iframe);
+
+    // Fallback bar shown below — always visible as option
+    const fbBar = document.createElement('div');
+    fbBar.style.cssText = 'margin-top:10px;display:flex;flex-direction:column;align-items:center;gap:8px;';
+    fbBar.innerHTML = `
+      <div style="font-size:11px;color:var(--text2);">If the video shows "unavailable", open it directly:</div>
+      <a href="https://www.youtube.com/watch?v=${ytId}" target="_blank" rel="noopener"
+         onclick="closePlayer()"
+         style="display:inline-flex;align-items:center;gap:7px;padding:10px 20px;
+           border-radius:10px;background:rgba(255,0,0,0.12);border:1px solid rgba(255,80,80,0.3);
+           color:#ff6060;font-size:14px;font-weight:600;text-decoration:none;font-family:'DM Sans',sans-serif;">
+        ▶ Open in YouTube
+      </a>`;
+    body.appendChild(wrap);
+    body.appendChild(fbBar);
+  } else if(gdrive){
+    // Google Drive embed — works for both video and audio files
+    const wrap = document.createElement('div');
+    wrap.className = 'pm-video-wrap';
+    const iframe = document.createElement('iframe');
+    iframe.src = gdrive.embedUrl;
+    iframe.allow = 'autoplay';
+    iframe.allowFullscreen = true;
+    // Drive preview has its own player UI for both video & audio
+    wrap.appendChild(iframe);
+    body.appendChild(wrap);
+  } else if(mediaType === 'video'){
+    // Native video (direct file or Supabase storage)
+    const wrap = document.createElement('div');
+    wrap.className = 'pm-video-wrap';
+    const vid = document.createElement('video');
+    vid.src = url; vid.controls = true; vid.autoplay = true;
+    vid.style.maxHeight = '280px';
+    wrap.appendChild(vid);
+    body.appendChild(wrap);
+  } else if(mediaType === 'audio'){
+    // Native audio (direct file or Supabase storage)
+    const wrap = document.createElement('div');
+    wrap.className = 'pm-audio-wrap';
+    const aud = document.createElement('audio');
+    aud.src = url; aud.controls = true; aud.autoplay = true;
+    wrap.appendChild(aud);
+    body.appendChild(wrap);
+  } else {
+    // Detect known streaming services for a better message
+    let svcName = 'this link', svcIco = '🔗';
+    try{
+      const h = new URL(url).hostname;
+      if(h.includes('spotify'))    { svcName='Spotify';      svcIco='🎵'; }
+      else if(h.includes('gaana')) { svcName='Gaana';        svcIco='🎵'; }
+      else if(h.includes('jiosaavn')||h.includes('saavn')) { svcName='JioSaavn'; svcIco='🎵'; }
+      else if(h.includes('wynk'))  { svcName='Wynk';         svcIco='🎵'; }
+      else if(h.includes('apple')) { svcName='Apple Music';  svcIco='🎵'; }
+      else if(h.includes('soundcloud')) { svcName='SoundCloud'; svcIco='☁️'; }
+    } catch(_){}
+    const fb = document.createElement('div');
+    fb.className = 'pm-fallback';
+    fb.innerHTML = `
+      <div class="pm-fallback-ico">${svcIco}</div>
+      <div class="pm-fallback-txt">${svcName} links open in the app or browser.<br>Tap below to play it.</div>
+      <a class="pm-open-link" href="${x(url)}" target="_blank" rel="noopener" onclick="closePlayer()">
+        ↗ Open in ${svcName}
+      </a>`;
+    body.appendChild(fb);
+  }
+
+  document.getElementById('player-overlay').classList.add('open');
+}
+
+function closePlayer(){
+  document.getElementById('player-overlay').classList.remove('open');
+  // Stop any media by clearing the body after transition
+  setTimeout(()=>{ document.getElementById('pm-body').innerHTML=''; }, 320);
+}
+
+function handlePlayerOverlay(e){
+  if(e.target===document.getElementById('player-overlay')) closePlayer();
+}
+
+// Close player on Escape
+document.addEventListener('keydown', e=>{
+  if(e.key==='Escape' && document.getElementById('player-overlay').classList.contains('open')){
+    closePlayer();
+  }
+});
+
+function getYouTubeId(url){
+  try{
+    const u = new URL(url);
+    if(u.hostname==='youtu.be') return u.pathname.slice(1).split('?')[0];
+    if(u.hostname.includes('youtube.com')){
+      if(u.searchParams.get('v')) return u.searchParams.get('v');
+      if(u.pathname.startsWith('/embed/')) return u.pathname.split('/embed/')[1].split('?')[0];
+      if(u.pathname.startsWith('/shorts/')) return u.pathname.split('/shorts/')[1].split('?')[0];
+      if(u.pathname.startsWith('/v/')) return u.pathname.split('/v/')[1].split('?')[0];
+    }
+    if(u.hostname==='music.youtube.com' && u.searchParams.get('v')) return u.searchParams.get('v');
+  } catch(_){}
+  const m = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|v\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+  return m ? m[1] : null;
+}
+
+// Returns {type:'video'|'audio', embedUrl} for Google Drive file links, or null
+function getGDriveEmbed(url){
+  try{
+    const u = new URL(url);
+    if(!u.hostname.includes('drive.google.com')) return null;
+    // Extract file ID from /file/d/FILE_ID/view or /open?id=FILE_ID
+    let fileId = null;
+    const m = u.pathname.match(/\/file\/d\/([^/]+)/);
+    if(m) fileId = m[1];
+    else if(u.searchParams.get('id')) fileId = u.searchParams.get('id');
+    if(!fileId) return null;
+    return { fileId, embedUrl: `https://drive.google.com/file/d/${fileId}/preview` };
+  } catch(_){ return null; }
+}
+
+function isVideo(url){
+  return /\.(mp4|webm|ogg|mov|mkv)(\?|$)/i.test(url);
+}
+function isAudio(url){
+  return /\.(mp3|wav|ogg|aac|flac|m4a)(\?|$)/i.test(url);
+}
+function isSupabaseStorage(url){
+  // Files uploaded to our Supabase storage bucket
+  return url.includes('supabase.co/storage') || url.includes('/object/public/'+BUCKET);
+}
+function guessMediaType(url){
+  if(/\.(mp4|webm|mov|mkv)(\?|$)/i.test(url)) return 'video';
+  if(/\.(mp3|wav|aac|flac|m4a|ogg)(\?|$)/i.test(url)) return 'audio';
+  // For Supabase storage, try to guess from filename in URL
+  if(isSupabaseStorage(url)){
+    if(/\.(mp4|webm|mov|mkv)/i.test(url)) return 'video';
+    return 'audio'; // default to audio player for uploaded files
+  }
+  return null;
+}
+
+// ── EXPORT ───────────────────────────────────────
+function openExport(){ document.getElementById('exp-overlay').classList.add('open'); }
+function closeExport(){ document.getElementById('exp-overlay').classList.remove('open'); }
+function handleOverlayClick(e){ if(e.target===document.getElementById('exp-overlay')) closeExport(); }
+
+function buildWorkbook(){
+  const rows = songs.map((s,i)=>({
+    '#': i+1,
+    'Song Name': s.name||'',
+    'Singer(s)': (s.singers||[]).join(', '),
+    'Karaoke Link': s.karaoke_link||''
+  }));
+  const ws = XLSX.utils.json_to_sheet(rows);
+  ws['!cols'] = [{wch:4},{wch:36},{wch:30},{wch:50}];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Setlist');
+  return wb;
+}
+
+async function loadXLSX(){
+  if(window.XLSX) return;
+  await new Promise((res,rej)=>{
+    const s = document.createElement('script');
+    s.src = 'https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js';
+    s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+
+async function exportExcel(){
+  closeExport();
+  if(!songs.length){ toast('No songs to export','err'); return; }
+  try{
+    toast('Preparing Excel…','inf');
+    await loadXLSX();
+    const wb = buildWorkbook();
+    XLSX.writeFile(wb, FILE_NAME);
+    toast('Downloaded '+FILE_NAME+' ✓','ok');
+  } catch(e){
+    toast('Export failed: '+e.message,'err');
+  }
+}
+
+// Google Drive upload using OAuth2 implicit flow + Drive API
+async function exportToDrive(){
+  closeExport();
+  if(!songs.length){ toast('No songs to export','err'); return; }
+
+  // If no GAPI credentials set, fall back to download + instruction
+  if(!GAPI_CLIENT_ID || !GAPI_API_KEY){
+    toast('Downloading file — then upload to Drive manually','inf');
+    setTimeout(exportExcel, 600);
+    return;
+  }
+
+  toast('Signing in to Google…','inf');
+  try{
+    // Load gapi
+    await loadScript('https://apis.google.com/js/api.js');
+    await new Promise(res=>gapi.load('client:auth2',res));
+    await gapi.client.init({apiKey:GAPI_API_KEY, clientId:GAPI_CLIENT_ID,
+      scope:'https://www.googleapis.com/auth/drive.file', discoveryDocs:[]});
+
+    const authInst = gapi.auth2.getAuthInstance();
+    if(!authInst.isSignedIn.get()) await authInst.signIn();
+
+    const token = gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token;
+    toast('Uploading to Drive…','inf');
+    await loadXLSX();
+    // Build xlsx as array buffer
+    const wb  = buildWorkbook();
+    const buf = XLSX.write(wb, {type:'array', bookType:'xlsx'});
+    const blob = new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+
+    // Multipart upload
+    const meta = JSON.stringify({name:FILE_NAME, mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const form = new FormData();
+    form.append('metadata', new Blob([meta],{type:'application/json'}));
+    form.append('file', blob);
+
+    const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',{
+      method:'POST',
+      headers:{Authorization:'Bearer '+token},
+      body:form
+    });
+    if(!res.ok) throw new Error('Drive upload failed: '+res.status);
+    const data = await res.json();
+    toast('Uploaded to Drive ✓ — "'+data.name+'"','ok');
+  } catch(err){
+    toast('Drive error: '+err.message,'err');
+    console.error(err);
+  }
+}
+
+function loadScript(src){
+  return new Promise((res,rej)=>{
+    if(document.querySelector(`script[src="${src}"]`)){res();return;}
+    const s=document.createElement('script');
+    s.src=src; s.onload=res; s.onerror=rej;
+    document.head.appendChild(s);
+  });
+}
+
+// ── UTILS ─────────────────────────────────────────
+function x(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+let _st;
+function toast(msg,type){
+  const el = document.getElementById('status');
+  el.textContent=msg; el.className='show '+type;
+  clearTimeout(_st); _st=setTimeout(()=>{el.className='';el.textContent='';},3000);
+}
+function setFdb(s){
+  const el = document.getElementById('fdb');
+  if(s==='ok')      el.textContent='● connected · supabase';
+  else if(s==='offline') el.textContent='◌ offline mode';
+  else if(s==='err') el.textContent='● error';
+  else               el.textContent='● connecting…';
+}
+
+init();
+</script>
+</body>
+</html>
