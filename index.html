@@ -17,6 +17,7 @@
     --purple-light: #7B5CF0;
     --rose: #FF6B6B;
     --teal: #00CED1;
+    --green: #4ade80;
     --bg: #0F0A2E;
     --surface: #1A1040;
     --surface2: #231550;
@@ -42,21 +43,40 @@
   header {
     background: linear-gradient(135deg, var(--purple) 0%, #1a0a50 50%, var(--purple-mid) 100%);
     border-bottom: 2px solid var(--gold);
-    padding: 10px 14px 10px;
+    padding: 10px 14px;
     position: sticky; top: 0; z-index: 100;
     box-shadow: 0 4px 24px rgba(0,0,0,0.5);
   }
   .header-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-  h1 {
-    font-family: 'Playfair Display', serif;
-    font-size: clamp(1.1rem, 5vw, 1.6rem);
-    font-weight: 900;
-    color: var(--gold);
-    text-shadow: 0 0 20px rgba(255,215,0,0.4);
-    line-height: 1.2;
-  }
-  h1 span { color: var(--text); font-size: 0.75em; display: block; font-weight: 700; }
   .header-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+
+  /* ── TITLE ── */
+  .title-block { display: flex; flex-direction: column; gap: 2px; }
+  #sparshTitle {
+    display: flex; flex-direction: row; align-items: center; gap: 10px;
+    opacity: 0; transform: translateX(-60px);
+    animation: slideInLeft 0.7s cubic-bezier(0.22,1,0.36,1) 0.2s forwards;
+    line-height: 1;
+  }
+  .mic-svg {
+    width: clamp(1.6rem, 6vw, 2.2rem); height: clamp(1.6rem, 6vw, 2.2rem);
+    flex-shrink: 0; filter: drop-shadow(0 0 8px rgba(255,215,0,0.5));
+  }
+  .sparsh-text {
+    font-family: 'Cinzel Decorative', cursive;
+    font-size: clamp(1.3rem, 5.5vw, 1.9rem); font-weight: 700;
+    background: linear-gradient(90deg, #FFD700 0%, #fff0a0 40%, #7B5CF0 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text; letter-spacing: 0.08em;
+    filter: drop-shadow(0 0 12px rgba(255,215,0,0.35));
+  }
+  .show-date {
+    font-size: clamp(0.65rem, 2.6vw, 0.8rem); color: var(--gold-light);
+    font-weight: 500; letter-spacing: 0.08em; padding-left: 2px;
+    opacity: 0; transform: translateX(-40px);
+    animation: slideInLeft 0.6s cubic-bezier(0.22,1,0.36,1) 0.5s forwards;
+  }
+  @keyframes slideInLeft { to { opacity: 1; transform: translateX(0); } }
 
   /* ── BUTTONS ── */
   .btn {
@@ -75,6 +95,16 @@
   .btn-ghost:hover { background: rgba(255,215,0,0.1); }
   .btn-danger { background: rgba(255,107,107,0.15); color: var(--rose); border: 1px solid rgba(255,107,107,0.3); padding: 8px 12px; }
   .btn-danger:hover { background: rgba(255,107,107,0.25); }
+  .btn-offline {
+    background: rgba(74,222,128,0.12); color: var(--green);
+    border: 1px solid rgba(74,222,128,0.35); padding: 4px 8px;
+    border-radius: 6px; font-size: 0.7rem; font-weight: 600;
+    cursor: pointer; white-space: nowrap; font-family: 'Poppins', sans-serif;
+    transition: all 0.15s; display: inline-flex; align-items: center; gap: 4px;
+  }
+  .btn-offline:hover { background: rgba(74,222,128,0.22); }
+  .btn-offline.has-file { background: rgba(74,222,128,0.2); border-color: var(--green); }
+  .btn-offline.uploading { opacity: 0.6; cursor: default; }
   .btn-sm { font-size: 0.75rem; padding: 6px 10px; }
   .btn:active { transform: scale(0.96); }
 
@@ -89,22 +119,14 @@
   #status-msg {
     font-size: 0.75rem; color: var(--text-dim);
     padding: 4px 10px; background: var(--surface2);
-    border-radius: 20px; border: 1px solid var(--border);
-    flex-shrink: 0;
+    border-radius: 20px; border: 1px solid var(--border); flex-shrink: 0;
   }
   #status-msg.ok { color: #7fff9a; border-color: rgba(127,255,154,0.3); }
   #status-msg.err { color: var(--rose); border-color: rgba(255,107,107,0.3); }
 
-  /* ── TABLE WRAPPER ── */
-  .table-wrap {
-    padding: 8px 8px 80px;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-  table {
-    width: 100%; border-collapse: separate; border-spacing: 0 4px;
-    min-width: 520px;
-  }
+  /* ── TABLE ── */
+  .table-wrap { padding: 8px 8px 80px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0 4px; min-width: 520px; }
   thead tr { background: transparent; }
   thead th {
     padding: 7px 8px; text-align: left;
@@ -115,33 +137,23 @@
   }
   thead th:first-child { width: 36px; text-align: center; }
   thead th:nth-child(2) { width: 42px; text-align: center; }
-
-  /* ── ROWS ── */
   tbody tr {
-    background: var(--surface);
-    border-radius: var(--radius);
-    transition: background 0.15s, box-shadow 0.15s;
-    cursor: grab;
+    background: var(--surface); border-radius: var(--radius);
+    transition: background 0.15s, box-shadow 0.15s; cursor: grab;
   }
   tbody tr:hover { background: var(--surface2); box-shadow: 0 4px 16px rgba(123,92,240,0.2); }
   tbody tr.dragging { opacity: 0.5; cursor: grabbing; }
   tbody tr.drag-over { box-shadow: 0 0 0 2px var(--gold); background: rgba(255,215,0,0.08); }
   tbody td {
-    padding: 7px 8px;
-    font-size: clamp(0.78rem, 2.8vw, 0.88rem);
+    padding: 7px 8px; font-size: clamp(0.78rem, 2.8vw, 0.88rem);
     vertical-align: middle;
     border-top: 1px solid rgba(255,255,255,0.04);
     border-bottom: 1px solid rgba(255,255,255,0.04);
   }
   tbody td:first-child { border-radius: var(--radius) 0 0 var(--radius); border-left: 1px solid rgba(255,255,255,0.06); }
   tbody td:last-child { border-radius: 0 var(--radius) var(--radius) 0; border-right: 1px solid rgba(255,255,255,0.06); }
-
   .drag-handle { cursor: grab; color: var(--text-dim); font-size: 1.1rem; text-align: center; user-select: none; touch-action: none; }
-  .row-num {
-    font-family: 'Playfair Display', serif; font-weight: 700;
-    color: var(--gold); font-size: clamp(1rem, 4vw, 1.15rem);
-    text-align: center; min-width: 36px;
-  }
+  .row-num { font-family: 'Playfair Display', serif; font-weight: 700; color: var(--gold); font-size: clamp(1rem, 4vw, 1.15rem); text-align: center; min-width: 36px; }
 
   /* ── INLINE EDIT ── */
   .cell-text { cursor: pointer; min-height: 1.4em; }
@@ -154,16 +166,14 @@
   }
   .cell-input:focus { border-color: var(--gold); }
 
-  /* ── SINGERS MULTI-SELECT ── */
+  /* ── SINGERS ── */
   .singers-display { display: flex; flex-wrap: wrap; gap: 4px; cursor: pointer; }
   .singer-chip {
     background: linear-gradient(135deg, var(--purple-mid), var(--purple-light));
     color: #fff; border-radius: 20px; padding: 3px 10px;
-    font-size: clamp(0.65rem, 2.5vw, 0.75rem); font-weight: 600;
-    white-space: nowrap;
+    font-size: clamp(0.65rem, 2.5vw, 0.75rem); font-weight: 600; white-space: nowrap;
   }
   .singer-chip.empty { background: var(--surface2); color: var(--text-dim); border: 1px dashed var(--border); }
-
   .singers-popup {
     position: fixed; z-index: 500;
     background: var(--surface2); border: 1.5px solid var(--purple-light);
@@ -178,14 +188,15 @@
     font-size: clamp(0.85rem, 3vw, 0.95rem);
   }
   .singer-option:hover { background: rgba(123,92,240,0.2); }
-  .singer-option input[type=checkbox] {
-    width: 18px; height: 18px; accent-color: var(--gold); cursor: pointer;
-  }
+  .singer-option input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--gold); cursor: pointer; }
   .singers-popup-footer { margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end; }
 
-  /* ── KARAOKE LINK CELL ── */
-  .link-cell { display: flex; align-items: center; gap: 6px; }
-  .link-cell .cell-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 120px; font-size: 0.78rem; color: var(--text-dim); }
+  /* ── KARAOKE CELL ── */
+  .link-cell { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+  .link-cell .cell-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 90px; font-size: 0.75rem; color: var(--text-dim); cursor: pointer; }
+  .link-cell .cell-text:hover { color: var(--gold-light); }
+
+  /* play button — online (teal) */
   .play-btn {
     background: linear-gradient(135deg, #00CED1, #007a7c);
     border: none; border-radius: 50%; width: 28px; height: 28px;
@@ -196,8 +207,22 @@
   .play-btn:hover { transform: scale(1.15); filter: brightness(1.2); }
   .play-btn:disabled { opacity: 0.3; cursor: default; }
 
-  /* ── ROW ACTIONS ── */
-  .row-actions { display: flex; gap: 6px; align-items: center; }
+  /* play button — offline (green) */
+  .play-btn-offline {
+    background: linear-gradient(135deg, #22c55e, #15803d);
+    border: none; border-radius: 50%; width: 28px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0; font-size: 0.75rem;
+    transition: transform 0.15s, filter 0.15s; color: #fff;
+  }
+  .play-btn-offline:hover { transform: scale(1.15); filter: brightness(1.15); }
+
+  /* offline badge on row */
+  .offline-badge {
+    font-size: 0.6rem; background: rgba(74,222,128,0.15);
+    color: var(--green); border: 1px solid rgba(74,222,128,0.3);
+    border-radius: 10px; padding: 1px 5px; white-space: nowrap;
+  }
 
   /* ── ADD SONG FORM ── */
   .add-form {
@@ -234,26 +259,53 @@
     display: flex; align-items: center; justify-content: center; padding: 20px;
   }
   .modal { background: var(--surface2); border-radius: 16px; border: 1.5px solid var(--purple-light); width: 100%; max-width: 560px; overflow: hidden; box-shadow: 0 24px 64px rgba(0,0,0,0.6); }
-  .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-bottom: 1px solid var(--border); }
-  .modal-header h2 { font-family: 'Playfair Display', serif; font-size: clamp(1rem, 4vw, 1.2rem); color: var(--gold); }
-  .modal-close { background: none; border: none; color: var(--text-dim); font-size: 1.4rem; cursor: pointer; padding: 4px; }
+  .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); gap: 10px; }
+  .modal-header h2 { font-family: 'Playfair Display', serif; font-size: clamp(1rem, 4vw, 1.2rem); color: var(--gold); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .modal-source-badge { font-size: 0.68rem; padding: 2px 8px; border-radius: 10px; white-space: nowrap; font-weight: 600; font-family: 'Poppins', sans-serif; }
+  .modal-source-badge.online { background: rgba(0,206,209,0.15); color: var(--teal); border: 1px solid rgba(0,206,209,0.3); }
+  .modal-source-badge.offline { background: rgba(74,222,128,0.15); color: var(--green); border: 1px solid rgba(74,222,128,0.3); }
+  .modal-close { background: none; border: none; color: var(--text-dim); font-size: 1.4rem; cursor: pointer; padding: 4px; flex-shrink: 0; }
   .modal-close:hover { color: var(--rose); }
-  .modal-body { padding: 20px; }
+  .modal-body { padding: 16px; }
   .video-wrap { position: relative; padding-top: 56.25%; border-radius: 10px; overflow: hidden; background: #000; }
   .video-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .video-wrap video { position: absolute; inset: 0; width: 100%; height: 100%; background: #000; }
   .video-link-msg { color: var(--text-dim); font-size: 0.9rem; text-align: center; padding: 20px; }
   .video-link-msg a { color: var(--teal); text-decoration: none; }
-  .video-link-msg a:hover { text-decoration: underline; }
 
-  /* ── LOADING ── */
+  /* ── FILE LOAD PROGRESS ── */
+  .file-progress {
+    margin-top: 8px; height: 3px; border-radius: 2px;
+    background: rgba(255,255,255,0.1); overflow: hidden; display: none;
+  }
+  .file-progress-bar { height: 100%; background: var(--green); width: 0; transition: width 0.2s; border-radius: 2px; }
+
+  /* ── OFFLINE PANEL (manage files) ── */
+  .offline-panel {
+    margin: 0 8px 8px; padding: 14px 16px;
+    background: rgba(74,222,128,0.06); border-radius: var(--radius);
+    border: 1.5px solid rgba(74,222,128,0.25);
+    animation: slideDown 0.2s ease;
+  }
+  .offline-panel h3 { color: var(--green); font-size: 0.82rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 6px; }
+  .offline-panel p { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 12px; line-height: 1.5; }
+  .offline-list { display: flex; flex-direction: column; gap: 6px; }
+  .offline-item {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--surface2); border-radius: 8px; padding: 8px 10px;
+    font-size: 0.82rem;
+  }
+  .offline-item .song-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .offline-item .file-status { font-size: 0.7rem; white-space: nowrap; }
+  .offline-item .file-status.saved { color: var(--green); }
+  .offline-item .file-status.none { color: var(--text-dim); }
+
+  /* ── LOADING / EMPTY ── */
   .loading-wrap { padding: 60px 20px; text-align: center; }
   .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
   @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* ── EMPTY ── */
   .empty-state { padding: 60px 20px; text-align: center; color: var(--text-dim); }
   .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
-  .empty-state p { font-size: 1rem; }
 
   /* ── TOAST ── */
   #toast {
@@ -266,59 +318,17 @@
   #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
   #toast.success { border-color: rgba(127,255,154,0.4); color: #7fff9a; }
   #toast.error { border-color: rgba(255,107,107,0.4); color: var(--rose); }
+  #toast.info { border-color: rgba(0,206,209,0.4); color: var(--teal); }
 
   /* ── SCROLLBAR ── */
   ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: var(--bg); }
   ::-webkit-scrollbar-thumb { background: var(--purple-mid); border-radius: 2px; }
 
-  /* ── TITLE ANIMATION ── */
-  .title-block { display: flex; flex-direction: column; gap: 2px; }
-  #sparshTitle {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 10px;
-    opacity: 0;
-    transform: translateX(-60px);
-    animation: slideInLeft 0.7s cubic-bezier(0.22,1,0.36,1) 0.2s forwards;
-    line-height: 1;
-  }
-  .mic-svg {
-    width: clamp(1.6rem, 6vw, 2.2rem);
-    height: clamp(1.6rem, 6vw, 2.2rem);
-    flex-shrink: 0;
-    filter: drop-shadow(0 0 8px rgba(255,215,0,0.5));
-  }
-  .sparsh-text {
-    font-family: 'Cinzel Decorative', cursive;
-    font-size: clamp(1.3rem, 5.5vw, 1.9rem);
-    font-weight: 700;
-    background: linear-gradient(90deg, #FFD700 0%, #fff0a0 40%, #7B5CF0 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    letter-spacing: 0.08em;
-    filter: drop-shadow(0 0 12px rgba(255,215,0,0.35));
-  }
-  .show-date {
-    font-size: clamp(0.65rem, 2.6vw, 0.8rem);
-    color: var(--gold-light);
-    font-weight: 500;
-    letter-spacing: 0.08em;
-    padding-left: 2px;
-    opacity: 0;
-    transform: translateX(-40px);
-    animation: slideInLeft 0.6s cubic-bezier(0.22,1,0.36,1) 0.5s forwards;
-  }
-  @keyframes slideInLeft {
-    to { opacity: 1; transform: translateX(0); }
-  }
+  .row-actions { display: flex; gap: 5px; align-items: center; }
 
-  /* ── COMPACT TABLE ── */
   @media (max-width: 480px) {
-    .link-cell .cell-text { max-width: 70px; }
-    thead th:last-child { display: none; }
+    .link-cell .cell-text { max-width: 60px; }
   }
 </style>
 </head>
@@ -345,6 +355,7 @@
       <div class="show-date">🗓 June 13th, 2026</div>
     </div>
     <div class="header-actions">
+      <button class="btn btn-icon btn-secondary" id="offlineMgrBtn" title="Manage offline files" style="font-size:1rem;">📂</button>
       <button class="btn btn-icon btn-secondary" id="refreshBtn" title="Refresh from Supabase">🔄</button>
       <button class="btn btn-icon btn-secondary" id="exportBtn" title="Export to Excel">📥</button>
     </div>
@@ -358,6 +369,7 @@
 </div>
 
 <div id="addFormContainer" style="display:none;"></div>
+<div id="offlinePanelContainer" style="display:none;"></div>
 
 <div class="table-wrap">
   <div id="loadingWrap" class="loading-wrap">
@@ -391,44 +403,118 @@
   <div class="modal">
     <div class="modal-header">
       <h2 id="modalTitle">🎶 Karaoke Player</h2>
+      <span id="modalSourceBadge" class="modal-source-badge online">🌐 Online</span>
       <button class="modal-close" id="modalClose">✕</button>
     </div>
     <div class="modal-body" id="modalBody"></div>
   </div>
 </div>
 
+<!-- Hidden file input for loading local files -->
+<input type="file" id="fileInput" accept="audio/*,video/*" style="display:none;">
+
 <div id="toast"></div>
 
 <script>
-// ─────────────────────────────────────────────
-// ⚙️  SUPABASE CONFIG — replace with your own
-// ─────────────────────────────────────────────
+// ── SUPABASE CONFIG ──
 const SUPABASE_URL = 'https://afnxggkjsxezrbhnntwl.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_YenvzolmYET7XAJF_4M9Ag_yJH2AdRG';
 const TABLE = 'songs';
-// ─────────────────────────────────────────────
 
 const COUSINS = ['Ravi','Soujanya','Soumya','Sravan','Saradhi','Harini','Ananya','Maanya'];
 
 let supabase_client;
 let songs = [];
 let editingCell = null;
-let singersPopupData = null; // { rowId, currentSingers, anchor }
 let dragSrc = null;
 
-// ── INIT ──
-try {
-  supabase_client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  fetchSongs();
-} catch(e) {
-  setStatus('Config error: set your Supabase URL & Key', 'err');
-  showLoading(false);
+// ════════════════════════════════════════════
+// 📦  INDEXEDDB — Offline file storage
+// ════════════════════════════════════════════
+const IDB_NAME = 'SparshKaraoke';
+const IDB_STORE = 'files';
+const IDB_VERSION = 1;
+let idb = null;
+
+function openIDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(IDB_NAME, IDB_VERSION);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(IDB_STORE)) {
+        db.createObjectStore(IDB_STORE, { keyPath: 'id' });
+      }
+    };
+    req.onsuccess = (e) => { idb = e.target.result; resolve(idb); };
+    req.onerror = () => reject(req.error);
+  });
 }
+
+function idbSaveFile(songId, blob, fileName) {
+  return new Promise((resolve, reject) => {
+    const tx = idb.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).put({ id: songId, blob, fileName, savedAt: Date.now() });
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function idbGetFile(songId) {
+  return new Promise((resolve, reject) => {
+    const tx = idb.transaction(IDB_STORE, 'readonly');
+    const req = tx.objectStore(IDB_STORE).get(songId);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function idbDeleteFile(songId) {
+  return new Promise((resolve, reject) => {
+    const tx = idb.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).delete(songId);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+function idbListAll() {
+  return new Promise((resolve, reject) => {
+    const tx = idb.transaction(IDB_STORE, 'readonly');
+    const req = tx.objectStore(IDB_STORE).getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+// Track which songs have offline files (in memory after init)
+let offlineFileMap = {}; // songId -> { fileName, savedAt }
+
+async function refreshOfflineMap() {
+  const all = await idbListAll();
+  offlineFileMap = {};
+  all.forEach(r => { offlineFileMap[r.id] = { fileName: r.fileName, savedAt: r.savedAt }; });
+}
+
+// ── INIT ──
+(async () => {
+  try {
+    await openIDB();
+    await refreshOfflineMap();
+  } catch(e) {
+    console.warn('IndexedDB unavailable:', e);
+  }
+  try {
+    supabase_client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    fetchSongs();
+  } catch(e) {
+    setStatus('Config error', 'err');
+    showLoading(false);
+  }
+})();
 
 // ── SUPABASE CRUD ──
 async function fetchSongs() {
-  showLoading(true);
-  setStatus('Fetching…');
+  showLoading(true); setStatus('Fetching…');
   try {
     const { data, error } = await supabase_client
       .from(TABLE).select('*').order('position', { ascending: true });
@@ -437,8 +523,8 @@ async function fetchSongs() {
     renderTable();
     setStatus(`${songs.length} song${songs.length!==1?'s':''} loaded`, 'ok');
   } catch(e) {
-    setStatus('Error: ' + e.message, 'err');
-    showToast('Failed to load: ' + e.message, 'error');
+    setStatus('Offline / error', 'err');
+    showToast('Could not reach server — showing cached data', 'info');
   }
   showLoading(false);
 }
@@ -446,10 +532,8 @@ async function fetchSongs() {
 async function insertSong(song) {
   const pos = songs.length ? Math.max(...songs.map(s=>s.position||0)) + 1 : 1;
   const { data, error } = await supabase_client.from(TABLE).insert([{
-    song_name: song.song_name,
-    singers: song.singers,
-    karaoke_link: song.karaoke_link,
-    position: pos
+    song_name: song.song_name, singers: song.singers,
+    karaoke_link: song.karaoke_link, position: pos
   }]).select().single();
   if (error) throw error;
   songs.push(data);
@@ -470,6 +554,8 @@ async function updateSong(id, fields) {
 async function deleteSong(id) {
   const { error } = await supabase_client.from(TABLE).delete().eq('id', id);
   if (error) { showToast('Delete failed: ' + error.message, 'error'); return; }
+  // Also remove offline file if any
+  try { await idbDeleteFile(id); delete offlineFileMap[id]; } catch(e) {}
   songs = songs.filter(s=>s.id!==id);
   renderTable();
   setStatus(`${songs.length} songs`, 'ok');
@@ -477,12 +563,44 @@ async function deleteSong(id) {
 }
 
 async function savePositions() {
-  const updates = songs.map((s,i) => ({ id: s.id, position: i+1 }));
-  for (const u of updates) {
-    await supabase_client.from(TABLE).update({ position: u.position }).eq('id', u.id);
-    const idx = songs.findIndex(s=>s.id===u.id);
-    if (idx!==-1) songs[idx].position = u.position;
+  for (const [i, s] of songs.entries()) {
+    await supabase_client.from(TABLE).update({ position: i+1 }).eq('id', s.id);
+    s.position = i+1;
   }
+}
+
+// ════════════════════════════════════════════
+// 🎤  OFFLINE FILE LOADING
+// ════════════════════════════════════════════
+let pendingFileSongId = null;
+
+document.getElementById('fileInput').onchange = async (e) => {
+  const file = e.target.files[0];
+  if (!file || !pendingFileSongId) return;
+  e.target.value = ''; // reset so same file can be re-picked
+
+  showToast('Saving file to device…', 'info');
+  try {
+    await idbSaveFile(pendingFileSongId, file, file.name);
+    offlineFileMap[pendingFileSongId] = { fileName: file.name, savedAt: Date.now() };
+    renderTable();
+    showToast(`✅ "${file.name}" saved for offline play!`, 'success');
+  } catch(err) {
+    showToast('Failed to save: ' + err.message, 'error');
+  }
+  pendingFileSongId = null;
+};
+
+function triggerFileLoad(songId) {
+  pendingFileSongId = songId;
+  document.getElementById('fileInput').click();
+}
+
+async function removeOfflineFile(songId) {
+  await idbDeleteFile(songId);
+  delete offlineFileMap[songId];
+  renderTable();
+  showToast('Offline file removed', 'success');
 }
 
 // ── RENDER ──
@@ -501,14 +619,12 @@ function renderTable() {
 
     // Drag handle
     const tdDrag = document.createElement('td');
-    tdDrag.className = 'drag-handle';
-    tdDrag.textContent = '⠿';
+    tdDrag.className = 'drag-handle'; tdDrag.textContent = '⠿';
     tr.appendChild(tdDrag);
 
     // Number
     const tdNum = document.createElement('td');
-    tdNum.className = 'row-num';
-    tdNum.textContent = idx + 1;
+    tdNum.className = 'row-num'; tdNum.textContent = idx + 1;
     tr.appendChild(tdNum);
 
     // Song name
@@ -521,7 +637,7 @@ function renderTable() {
     tdSingers.appendChild(makeSingersCell(song));
     tr.appendChild(tdSingers);
 
-    // Karaoke
+    // Karaoke cell (online link + offline load + play buttons)
     const tdLink = document.createElement('td');
     tdLink.appendChild(makeLinkCell(song));
     tr.appendChild(tdLink);
@@ -532,22 +648,17 @@ function renderTable() {
     actDiv.className = 'row-actions';
     const delBtn = document.createElement('button');
     delBtn.className = 'btn btn-danger btn-sm';
-    delBtn.innerHTML = '🗑';
-    delBtn.title = 'Delete song';
+    delBtn.innerHTML = '🗑'; delBtn.title = 'Delete song';
     delBtn.onclick = () => { if(confirm(`Delete "${song.song_name}"?`)) deleteSong(song.id); };
     actDiv.appendChild(delBtn);
     tdAct.appendChild(actDiv);
     tr.appendChild(tdAct);
 
-    // Drag events
     tr.addEventListener('dragstart', onDragStart);
     tr.addEventListener('dragover', onDragOver);
     tr.addEventListener('drop', onDrop);
     tr.addEventListener('dragend', onDragEnd);
-
-    // Touch drag (mobile)
     setupTouchDrag(tr);
-
     tbody.appendChild(tr);
   });
 }
@@ -563,20 +674,15 @@ function makeEditableCell(song, field, displayText) {
 
 function startInlineEdit(song, field, span) {
   if (editingCell) finishEdit(false);
-  const oldVal = song[field] || '';
   const input = document.createElement('input');
   input.className = 'cell-input';
-  input.value = oldVal;
+  input.value = song[field] || '';
   input.placeholder = field === 'karaoke_link' ? 'Google Drive / YouTube link' : 'Song name';
   span.parentNode.replaceChild(input, span);
   input.focus();
   editingCell = { song, field, input, span };
-
   input.onblur = () => finishEdit(true);
-  input.onkeydown = (e) => {
-    if (e.key === 'Enter') finishEdit(true);
-    if (e.key === 'Escape') finishEdit(false);
-  };
+  input.onkeydown = (e) => { if(e.key==='Enter') finishEdit(true); if(e.key==='Escape') finishEdit(false); };
 }
 
 async function finishEdit(save) {
@@ -588,7 +694,6 @@ async function finishEdit(save) {
     span.textContent = newVal || '—';
     input.parentNode.replaceChild(span, input);
     await updateSong(song.id, { [field]: newVal });
-    // Re-render link cell if karaoke field changed
     if (field === 'karaoke_link') renderTable();
   } else {
     span.textContent = song[field] || '—';
@@ -603,14 +708,12 @@ function makeSingersCell(song) {
   div.title = 'Tap to change singers';
   if (!singers.length) {
     const chip = document.createElement('span');
-    chip.className = 'singer-chip empty';
-    chip.textContent = 'Tap to assign';
+    chip.className = 'singer-chip empty'; chip.textContent = 'Tap to assign';
     div.appendChild(chip);
   } else {
     singers.forEach(name => {
       const chip = document.createElement('span');
-      chip.className = 'singer-chip';
-      chip.textContent = name;
+      chip.className = 'singer-chip'; chip.textContent = name;
       div.appendChild(chip);
     });
   }
@@ -622,21 +725,52 @@ function makeLinkCell(song) {
   const div = document.createElement('div');
   div.className = 'link-cell';
   const link = song.karaoke_link || '';
+  const hasOffline = !!offlineFileMap[song.id];
+  const offlineInfo = offlineFileMap[song.id];
 
+  // ── Online link text (editable) ──
   const span = document.createElement('span');
   span.className = 'cell-text';
-  span.textContent = link ? '🔗 Link' : 'No link';
-  span.title = 'Tap to edit link';
+  span.textContent = link ? '🔗' : '—';
+  span.title = link ? ('Online: ' + link) : 'Tap to add link';
   span.onclick = () => startInlineEdit(song, 'karaoke_link', span);
   div.appendChild(span);
 
-  const playBtn = document.createElement('button');
-  playBtn.className = 'play-btn';
-  playBtn.title = 'Play karaoke';
-  playBtn.innerHTML = '▶';
-  if (!link) playBtn.disabled = true;
-  playBtn.onclick = (e) => { e.stopPropagation(); openKaraokeModal(song); };
-  div.appendChild(playBtn);
+  // ── Online play button ──
+  const playOnline = document.createElement('button');
+  playOnline.className = 'play-btn';
+  playOnline.title = 'Play via online link';
+  playOnline.innerHTML = '▶';
+  if (!link) playOnline.disabled = true;
+  playOnline.onclick = (e) => { e.stopPropagation(); openKaraokeModal(song, 'online'); };
+  div.appendChild(playOnline);
+
+  // ── Offline section ──
+  if (hasOffline) {
+    // Offline play button (green)
+    const playOffline = document.createElement('button');
+    playOffline.className = 'play-btn-offline';
+    playOffline.title = `Play offline: ${offlineInfo.fileName}`;
+    playOffline.innerHTML = '▶';
+    playOffline.onclick = (e) => { e.stopPropagation(); openKaraokeModal(song, 'offline'); };
+    div.appendChild(playOffline);
+
+    // Badge showing it's saved
+    const badge = document.createElement('span');
+    badge.className = 'offline-badge';
+    badge.title = `Saved: ${offlineInfo.fileName}`;
+    badge.textContent = '📥 Saved';
+    div.appendChild(badge);
+  } else {
+    // Load file button
+    const loadBtn = document.createElement('button');
+    loadBtn.className = 'btn-offline';
+    loadBtn.title = 'Load local file for offline play';
+    loadBtn.innerHTML = '📁 Load';
+    loadBtn.onclick = (e) => { e.stopPropagation(); triggerFileLoad(song.id); };
+    div.appendChild(loadBtn);
+  }
+
   return div;
 }
 
@@ -645,51 +779,22 @@ function showSingersPopup(song, anchor, e) {
   e.stopPropagation();
   const popup = document.getElementById('singersPopup');
   const selected = Array.isArray(song.singers) ? [...song.singers] : [];
-
   popup.innerHTML = '';
-  const h4 = document.createElement('h4');
-  h4.textContent = 'Select Singer(s)';
-  popup.appendChild(h4);
-
+  const h4 = document.createElement('h4'); h4.textContent = 'Select Singer(s)'; popup.appendChild(h4);
   COUSINS.forEach(name => {
-    const div = document.createElement('div');
-    div.className = 'singer-option';
-    const cb = document.createElement('input');
-    cb.type = 'checkbox';
-    cb.id = 'sp_' + name;
-    cb.checked = selected.includes(name);
-    cb.onchange = () => {
-      if (cb.checked) { if (!selected.includes(name)) selected.push(name); }
-      else { const i = selected.indexOf(name); if(i>-1) selected.splice(i,1); }
-    };
-    const lbl = document.createElement('label');
-    lbl.htmlFor = 'sp_' + name;
-    lbl.textContent = name;
-    lbl.style.cursor = 'pointer'; lbl.style.flex = '1';
+    const div = document.createElement('div'); div.className = 'singer-option';
+    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'sp_'+name; cb.checked = selected.includes(name);
+    cb.onchange = () => { if(cb.checked){if(!selected.includes(name))selected.push(name);}else{const i=selected.indexOf(name);if(i>-1)selected.splice(i,1);} };
+    const lbl = document.createElement('label'); lbl.htmlFor='sp_'+name; lbl.textContent=name; lbl.style.cssText='cursor:pointer;flex:1';
     div.appendChild(cb); div.appendChild(lbl);
-    div.onclick = () => { cb.checked = !cb.checked; cb.dispatchEvent(new Event('change')); };
+    div.onclick = () => { cb.checked=!cb.checked; cb.dispatchEvent(new Event('change')); };
     popup.appendChild(div);
   });
-
-  const footer = document.createElement('div');
-  footer.className = 'singers-popup-footer';
-  const cancelBtn = document.createElement('button');
-  cancelBtn.className = 'btn btn-ghost btn-sm';
-  cancelBtn.textContent = 'Cancel';
-  cancelBtn.onclick = () => { popup.style.display='none'; };
-  const saveBtn = document.createElement('button');
-  saveBtn.className = 'btn btn-primary btn-sm';
-  saveBtn.textContent = 'Done';
-  saveBtn.onclick = async () => {
-    popup.style.display = 'none';
-    await updateSong(song.id, { singers: selected });
-    song.singers = selected;
-    renderTable();
-  };
-  footer.appendChild(cancelBtn); footer.appendChild(saveBtn);
-  popup.appendChild(footer);
-
-  // Position popup
+  const footer = document.createElement('div'); footer.className = 'singers-popup-footer';
+  const cancelBtn = document.createElement('button'); cancelBtn.className='btn btn-ghost btn-sm'; cancelBtn.textContent='Cancel'; cancelBtn.onclick=()=>{popup.style.display='none';};
+  const saveBtn = document.createElement('button'); saveBtn.className='btn btn-primary btn-sm'; saveBtn.textContent='Done';
+  saveBtn.onclick = async () => { popup.style.display='none'; await updateSong(song.id,{singers:selected}); song.singers=selected; renderTable(); };
+  footer.appendChild(cancelBtn); footer.appendChild(saveBtn); popup.appendChild(footer);
   const rect = anchor.getBoundingClientRect();
   popup.style.display = 'block';
   const popH = popup.offsetHeight || 320;
@@ -700,64 +805,162 @@ function showSingersPopup(song, anchor, e) {
   if (left + 280 > window.innerWidth - 10) left = window.innerWidth - 290;
   popup.style.left = Math.max(10, left) + 'px';
 }
-
 document.addEventListener('click', (e) => {
   const popup = document.getElementById('singersPopup');
   if (!popup.contains(e.target)) popup.style.display = 'none';
 });
 
-// ── KARAOKE MODAL ──
-function openKaraokeModal(song) {
-  const link = song.karaoke_link || '';
-  if (!link) return;
-  document.getElementById('modalTitle').textContent = '🎶 ' + (song.song_name || 'Karaoke');
+// ════════════════════════════════════════════
+// 🎬  KARAOKE MODAL — online + offline
+// ════════════════════════════════════════════
+async function openKaraokeModal(song, mode) {
   const body = document.getElementById('modalBody');
+  const titleEl = document.getElementById('modalTitle');
+  const badge = document.getElementById('modalSourceBadge');
   body.innerHTML = '';
+  titleEl.textContent = '🎶 ' + (song.song_name || 'Karaoke');
 
-  const embedUrl = getEmbedUrl(link);
-  if (embedUrl) {
-    const wrap = document.createElement('div');
-    wrap.className = 'video-wrap';
-    const iframe = document.createElement('iframe');
-    iframe.src = embedUrl;
-    iframe.allow = 'autoplay; encrypted-media';
-    iframe.allowFullscreen = true;
-    iframe.frameBorder = '0';
-    wrap.appendChild(iframe);
+  if (mode === 'offline') {
+    badge.textContent = '📥 Offline'; badge.className = 'modal-source-badge offline';
+    document.getElementById('karaokeModal').style.display = 'flex';
+
+    const rec = await idbGetFile(song.id);
+    if (!rec) { showToast('File not found — try reloading it', 'error'); closeModal(); return; }
+
+    const url = URL.createObjectURL(rec.blob);
+    const wrap = document.createElement('div'); wrap.className = 'video-wrap';
+    const isVideo = rec.blob.type.startsWith('video/');
+    if (isVideo) {
+      const vid = document.createElement('video');
+      vid.src = url; vid.controls = true; vid.autoplay = true;
+      vid.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;background:#000;';
+      vid.onended = () => URL.revokeObjectURL(url);
+      wrap.appendChild(vid);
+    } else {
+      // Audio file — show styled audio player
+      wrap.style.cssText = 'position:relative;padding-top:0;height:80px;border-radius:10px;background:linear-gradient(135deg,#1A1040,#231550);display:flex;align-items:center;justify-content:center;padding:0 16px;';
+      const aud = document.createElement('audio');
+      aud.src = url; aud.controls = true; aud.autoplay = true;
+      aud.style.cssText = 'width:100%;accent-color:#FFD700;';
+      aud.onended = () => URL.revokeObjectURL(url);
+      wrap.appendChild(aud);
+    }
+    // File info
+    const info = document.createElement('p');
+    info.style.cssText = 'margin-top:10px;font-size:0.72rem;color:var(--text-dim);text-align:center;';
+    const d = new Date(rec.savedAt);
+    info.textContent = `📁 ${rec.fileName} · Saved ${d.toLocaleDateString()}`;
     body.appendChild(wrap);
+    body.appendChild(info);
+
   } else {
-    const msg = document.createElement('div');
-    msg.className = 'video-link-msg';
-    msg.innerHTML = `<p style="margin-bottom:14px">This link can't be embedded directly.<br>Open in your browser:</p><a href="${link}" target="_blank" rel="noopener">${link}</a>`;
-    body.appendChild(msg);
+    // Online mode
+    badge.textContent = '🌐 Online'; badge.className = 'modal-source-badge online';
+    document.getElementById('karaokeModal').style.display = 'flex';
+
+    const link = song.karaoke_link || '';
+    const embedUrl = getEmbedUrl(link);
+    if (embedUrl) {
+      const wrap = document.createElement('div'); wrap.className = 'video-wrap';
+      const iframe = document.createElement('iframe');
+      iframe.src = embedUrl; iframe.allow = 'autoplay; encrypted-media'; iframe.allowFullscreen = true; iframe.frameBorder = '0';
+      wrap.appendChild(iframe); body.appendChild(wrap);
+    } else if (link) {
+      const msg = document.createElement('div'); msg.className = 'video-link-msg';
+      msg.innerHTML = `<p style="margin-bottom:14px">Can't embed this link directly. Open in browser:</p><a href="${link}" target="_blank" rel="noopener">${link}</a>`;
+      body.appendChild(msg);
+    }
   }
-  document.getElementById('karaokeModal').style.display = 'flex';
 }
 
 function getEmbedUrl(link) {
   if (!link) return null;
-  // YouTube
   const ytMatch = link.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
   if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1`;
-  // Google Drive
   const gdMatch = link.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([a-zA-Z0-9_-]+)/);
   if (gdMatch) return `https://drive.google.com/file/d/${gdMatch[1]}/preview`;
-  // Drive share link
   const gdShare = link.match(/drive\.google\.com\/.*[?&]id=([a-zA-Z0-9_-]+)/);
   if (gdShare) return `https://drive.google.com/file/d/${gdShare[1]}/preview`;
   return null;
 }
 
-document.getElementById('modalClose').onclick = () => {
+function closeModal() {
   document.getElementById('karaokeModal').style.display = 'none';
-  document.getElementById('modalBody').innerHTML = ''; // stop playback
-};
-document.getElementById('karaokeModal').addEventListener('click', (e) => {
-  if (e.target === e.currentTarget) {
-    document.getElementById('karaokeModal').style.display = 'none';
-    document.getElementById('modalBody').innerHTML = '';
-  }
-});
+  document.getElementById('modalBody').innerHTML = '';
+}
+document.getElementById('modalClose').onclick = closeModal;
+document.getElementById('karaokeModal').addEventListener('click', (e) => { if(e.target===e.currentTarget) closeModal(); });
+
+// ════════════════════════════════════════════
+// 📂  OFFLINE FILE MANAGER PANEL
+// ════════════════════════════════════════════
+let offlinePanelOpen = false;
+document.getElementById('offlineMgrBtn').onclick = toggleOfflinePanel;
+
+async function toggleOfflinePanel() {
+  const container = document.getElementById('offlinePanelContainer');
+  if (offlinePanelOpen) { container.style.display='none'; container.innerHTML=''; offlinePanelOpen=false; return; }
+  offlinePanelOpen = true;
+  await refreshOfflineMap();
+  renderOfflinePanel();
+  container.style.display = 'block';
+}
+
+function renderOfflinePanel() {
+  const container = document.getElementById('offlinePanelContainer');
+  container.innerHTML = '';
+  const panel = document.createElement('div'); panel.className = 'offline-panel';
+
+  const h3 = document.createElement('h3');
+  h3.innerHTML = '📂 Offline File Manager';
+  panel.appendChild(h3);
+
+  const desc = document.createElement('p');
+  desc.textContent = 'Load audio/video files from your device for each song. Once saved, tap the green ▶ button on any row to play offline — even without internet on stage.';
+  panel.appendChild(desc);
+
+  const list = document.createElement('div'); list.className = 'offline-list';
+
+  songs.forEach(song => {
+    const item = document.createElement('div'); item.className = 'offline-item';
+    const nameEl = document.createElement('span'); nameEl.className = 'song-name'; nameEl.textContent = song.song_name || '(unnamed)';
+    item.appendChild(nameEl);
+
+    const info = offlineFileMap[song.id];
+    if (info) {
+      const statusEl = document.createElement('span'); statusEl.className = 'file-status saved';
+      statusEl.textContent = `✅ ${info.fileName}`;
+      item.appendChild(statusEl);
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'btn btn-danger btn-sm'; removeBtn.textContent = '🗑';
+      removeBtn.title = 'Remove offline file';
+      removeBtn.onclick = async () => { await removeOfflineFile(song.id); renderOfflinePanel(); };
+      item.appendChild(removeBtn);
+      const replaceBtn = document.createElement('button');
+      replaceBtn.className = 'btn-offline'; replaceBtn.innerHTML = '🔄 Replace';
+      replaceBtn.onclick = () => { offlinePanelOpen=false; container.style.display='none'; container.innerHTML=''; triggerFileLoad(song.id); };
+      item.appendChild(replaceBtn);
+    } else {
+      const statusEl = document.createElement('span'); statusEl.className = 'file-status none';
+      statusEl.textContent = 'No file';
+      item.appendChild(statusEl);
+      const loadBtn = document.createElement('button');
+      loadBtn.className = 'btn-offline'; loadBtn.innerHTML = '📁 Load File';
+      loadBtn.onclick = () => { offlinePanelOpen=false; container.style.display='none'; container.innerHTML=''; triggerFileLoad(song.id); };
+      item.appendChild(loadBtn);
+    }
+    list.appendChild(item);
+  });
+
+  panel.appendChild(list);
+
+  // Close button
+  const closeRow = document.createElement('div'); closeRow.style.cssText='margin-top:12px;display:flex;justify-content:flex-end;';
+  const closeBtn = document.createElement('button'); closeBtn.className='btn btn-ghost btn-sm'; closeBtn.textContent='✕ Close';
+  closeBtn.onclick = () => { container.style.display='none'; container.innerHTML=''; offlinePanelOpen=false; };
+  closeRow.appendChild(closeBtn); panel.appendChild(closeRow);
+  container.appendChild(panel);
+}
 
 // ── ADD SONG FORM ──
 document.getElementById('addBtn').onclick = toggleAddForm;
@@ -783,7 +986,7 @@ function toggleAddForm() {
           <div class="form-singers" id="fSingers"></div>
         </div>
         <div class="form-group full">
-          <label>Karaoke Link</label>
+          <label>Karaoke Link (optional)</label>
           <input class="form-input" id="fLink" placeholder="Google Drive or YouTube link…" autocomplete="off">
         </div>
       </div>
@@ -792,147 +995,86 @@ function toggleAddForm() {
         <button class="btn btn-primary" id="saveAddBtn">💾 Save Song</button>
       </div>
     </div>`;
-
   const singersDiv = document.getElementById('fSingers');
   COUSINS.forEach(name => {
-    const btn = document.createElement('button');
-    btn.type = 'button';
-    btn.className = 'form-singer-btn';
-    btn.textContent = name;
-    btn.onclick = () => {
-      if (selectedSingers.includes(name)) {
-        selectedSingers = selectedSingers.filter(s=>s!==name);
-        btn.classList.remove('selected');
-      } else {
-        selectedSingers.push(name);
-        btn.classList.add('selected');
-      }
-    };
+    const btn = document.createElement('button'); btn.type='button'; btn.className='form-singer-btn'; btn.textContent=name;
+    btn.onclick = () => { if(selectedSingers.includes(name)){selectedSingers=selectedSingers.filter(s=>s!==name);btn.classList.remove('selected');}else{selectedSingers.push(name);btn.classList.add('selected');} };
     singersDiv.appendChild(btn);
   });
-
   document.getElementById('cancelAddBtn').onclick = toggleAddForm;
   document.getElementById('saveAddBtn').onclick = async () => {
     const name = document.getElementById('fSongName').value.trim();
-    if (!name) { showToast('Please enter a song name', 'error'); return; }
+    if (!name) { showToast('Please enter a song name','error'); return; }
     const btn = document.getElementById('saveAddBtn');
-    btn.disabled = true; btn.textContent = 'Saving…';
+    btn.disabled=true; btn.textContent='Saving…';
     try {
       await insertSong({ song_name: name, singers: selectedSingers, karaoke_link: document.getElementById('fLink').value.trim() });
       toggleAddForm();
-    } catch(e) {
-      showToast('Error: ' + e.message, 'error');
-      btn.disabled = false; btn.textContent = '💾 Save Song';
-    }
+    } catch(e) { showToast('Error: '+e.message,'error'); btn.disabled=false; btn.textContent='💾 Save Song'; }
   };
   document.getElementById('fSongName').focus();
 }
 
 // ── DRAG & DROP (Desktop) ──
-function onDragStart(e) {
-  dragSrc = this;
-  this.classList.add('dragging');
-  e.dataTransfer.effectAllowed = 'move';
-}
-function onDragOver(e) {
-  e.preventDefault();
-  document.querySelectorAll('tbody tr').forEach(r=>r.classList.remove('drag-over'));
-  this.classList.add('drag-over');
-}
+function onDragStart(e) { dragSrc=this; this.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; }
+function onDragOver(e) { e.preventDefault(); document.querySelectorAll('tbody tr').forEach(r=>r.classList.remove('drag-over')); this.classList.add('drag-over'); }
 function onDrop(e) {
-  e.preventDefault();
-  if (dragSrc === this) return;
-  const tbody = document.getElementById('songBody');
-  const rows = [...tbody.querySelectorAll('tr')];
-  const srcIdx = rows.indexOf(dragSrc);
-  const tgtIdx = rows.indexOf(this);
-  const [moved] = songs.splice(srcIdx, 1);
-  songs.splice(tgtIdx, 0, moved);
-  renderTable();
-  savePositions();
-  showToast('Order updated 🎶', 'success');
+  e.preventDefault(); if(dragSrc===this) return;
+  const rows=[...document.getElementById('songBody').querySelectorAll('tr')];
+  const [moved]=songs.splice(rows.indexOf(dragSrc),1); songs.splice(rows.indexOf(this),0,moved);
+  renderTable(); savePositions(); showToast('Order updated 🎶','success');
 }
-function onDragEnd() {
-  document.querySelectorAll('tbody tr').forEach(r=>{ r.classList.remove('dragging'); r.classList.remove('drag-over'); });
-  dragSrc = null;
-}
+function onDragEnd() { document.querySelectorAll('tbody tr').forEach(r=>{r.classList.remove('dragging');r.classList.remove('drag-over');}); dragSrc=null; }
 
 // ── TOUCH DRAG (Mobile) ──
 function setupTouchDrag(tr) {
-  let startY, cloneEl, startIdx, animFrame;
-
+  let startY, cloneEl, startIdx;
   tr.addEventListener('touchstart', (e) => {
-    const touch = e.touches[0];
     if (!e.target.closest('.drag-handle')) return;
     e.preventDefault();
-    startY = touch.clientY;
+    startY = e.touches[0].clientY;
     startIdx = [...document.querySelectorAll('#songBody tr')].indexOf(tr);
     tr.classList.add('dragging');
-
     cloneEl = tr.cloneNode(true);
     cloneEl.style.cssText = `position:fixed;left:${tr.getBoundingClientRect().left}px;width:${tr.offsetWidth}px;opacity:0.85;z-index:999;pointer-events:none;background:var(--surface2);border-radius:var(--radius);box-shadow:0 8px 32px rgba(0,0,0,0.5);`;
     cloneEl.style.top = tr.getBoundingClientRect().top + 'px';
     document.body.appendChild(cloneEl);
   }, { passive: false });
-
   tr.addEventListener('touchmove', (e) => {
-    if (!cloneEl) return;
-    e.preventDefault();
-    const touch = e.touches[0];
-    const dy = touch.clientY - startY;
-    cloneEl.style.top = (tr.getBoundingClientRect().top + dy) + 'px';
-
-    // Find target row
+    if (!cloneEl) return; e.preventDefault();
+    cloneEl.style.top = (tr.getBoundingClientRect().top + e.touches[0].clientY - startY) + 'px';
     const rows = [...document.querySelectorAll('#songBody tr')];
-    rows.forEach(r => r.classList.remove('drag-over'));
-    const elem = document.elementFromPoint(touch.clientX, touch.clientY);
-    const targetRow = elem && elem.closest('tr');
-    if (targetRow && targetRow !== tr && rows.includes(targetRow)) {
-      targetRow.classList.add('drag-over');
-    }
+    rows.forEach(r=>r.classList.remove('drag-over'));
+    const el = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
+    const tgt = el && el.closest('tr');
+    if (tgt && tgt!==tr && rows.includes(tgt)) tgt.classList.add('drag-over');
   }, { passive: false });
-
   tr.addEventListener('touchend', (e) => {
     if (!cloneEl) return;
-    tr.classList.remove('dragging');
-    document.body.removeChild(cloneEl);
-    cloneEl = null;
-
-    const touch = e.changedTouches[0];
-    const elem = document.elementFromPoint(touch.clientX, touch.clientY);
-    const targetRow = elem && elem.closest('tr');
+    tr.classList.remove('dragging'); document.body.removeChild(cloneEl); cloneEl=null;
     const rows = [...document.querySelectorAll('#songBody tr')];
-    rows.forEach(r => r.classList.remove('drag-over'));
-
-    if (targetRow && targetRow !== tr && rows.includes(targetRow)) {
-      const tgtIdx = rows.indexOf(targetRow);
-      const [moved] = songs.splice(startIdx, 1);
-      songs.splice(tgtIdx, 0, moved);
-      renderTable();
-      savePositions();
-      showToast('Order updated 🎶', 'success');
+    rows.forEach(r=>r.classList.remove('drag-over'));
+    const el = document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+    const tgt = el && el.closest('tr');
+    if (tgt && tgt!==tr && rows.includes(tgt)) {
+      const [moved]=songs.splice(startIdx,1); songs.splice(rows.indexOf(tgt),0,moved);
+      renderTable(); savePositions(); showToast('Order updated 🎶','success');
     }
   });
 }
 
 // ── EXPORT ──
 document.getElementById('exportBtn').onclick = () => {
-  if (!songs.length) { showToast('No songs to export', 'error'); return; }
-  const rows = songs.map((s, i) => ({
-    '#': i+1,
-    'Song Name': s.song_name || '',
-    'Singer(s)': Array.isArray(s.singers) ? s.singers.join(', ') : '',
-    'Karaoke Link': s.karaoke_link || ''
-  }));
+  if (!songs.length) { showToast('No songs to export','error'); return; }
+  const rows = songs.map((s,i) => ({'#':i+1,'Song Name':s.song_name||'','Singer(s)':Array.isArray(s.singers)?s.singers.join(', '):'',' Karaoke Link':s.karaoke_link||'','Offline File':offlineFileMap[s.id]?offlineFileMap[s.id].fileName:''}));
   const wb = XLSX.utils.book_new();
   const ws = XLSX.utils.json_to_sheet(rows);
-  ws['!cols'] = [{ wch: 5 }, { wch: 35 }, { wch: 40 }, { wch: 60 }];
-  XLSX.utils.book_append_sheet(wb, ws, 'Setlist');
-  XLSX.writeFile(wb, 'FamilyStageShow_Setlist.xlsx');
-  showToast('Exported! 📥', 'success');
+  ws['!cols'] = [{wch:5},{wch:35},{wch:40},{wch:55},{wch:30}];
+  XLSX.utils.book_append_sheet(wb,ws,'Setlist');
+  XLSX.writeFile(wb,'Sparsh_Setlist.xlsx');
+  showToast('Exported! 📥','success');
 };
 
-// ── REFRESH ──
 document.getElementById('refreshBtn').onclick = () => fetchSongs();
 
 // ── UTILS ──
@@ -940,20 +1082,11 @@ function showLoading(show) {
   document.getElementById('loadingWrap').style.display = show ? 'block' : 'none';
   if (show) { document.getElementById('songTable').style.display='none'; document.getElementById('emptyState').style.display='none'; }
 }
-
-function setStatus(msg, type='') {
-  const el = document.getElementById('status-msg');
-  el.textContent = msg;
-  el.className = type;
-}
-
+function setStatus(msg, type='') { const el=document.getElementById('status-msg'); el.textContent=msg; el.className=type; }
 let toastTimer;
 function showToast(msg, type='success') {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.className = 'show ' + type;
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => { t.className = ''; }, 2800);
+  const t=document.getElementById('toast'); t.textContent=msg; t.className='show '+type;
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>{t.className='';},3000);
 }
 </script>
 </body>
