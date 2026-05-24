@@ -327,6 +327,34 @@
 
   .row-actions { display: flex; gap: 5px; align-items: center; }
 
+  /* ── IMPORT MODAL ── */
+  .import-instructions { font-size: 0.82rem; color: var(--text-dim); margin-bottom: 14px; line-height: 1.6; }
+  .import-instructions b { color: var(--gold); }
+  .import-col-map { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+  .import-col-map label { font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 4px; }
+  .import-col-map select {
+    width: 100%; background: rgba(255,255,255,0.06); border: 1.5px solid var(--border);
+    color: var(--text); border-radius: 8px; padding: 7px 10px;
+    font-family: 'Poppins', sans-serif; font-size: 0.82rem; outline: none;
+  }
+  .import-col-map select:focus { border-color: var(--gold); }
+  .import-preview-wrap { max-height: 220px; overflow-y: auto; margin-bottom: 14px; border-radius: 8px; border: 1px solid var(--border); }
+  .import-preview-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  .import-preview-table th { padding: 6px 10px; background: var(--surface); color: var(--gold); text-align: left; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; position: sticky; top: 0; }
+  .import-preview-table td { padding: 6px 10px; border-top: 1px solid rgba(255,255,255,0.05); color: var(--text-dim); }
+  .import-preview-table tr:hover td { background: rgba(255,255,255,0.03); color: var(--text); }
+  .import-summary { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 12px; }
+  .import-summary b { color: var(--green); }
+  .import-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+  .import-mode-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .import-mode-btn {
+    flex: 1; min-width: 120px; padding: 8px 12px; border-radius: 8px; border: 1.5px solid var(--border);
+    background: var(--surface); color: var(--text-dim); cursor: pointer;
+    font-family: 'Poppins', sans-serif; font-size: 0.78rem; font-weight: 600;
+    text-align: center; transition: all 0.15s;
+  }
+  .import-mode-btn.active { border-color: var(--gold); background: rgba(255,215,0,0.1); color: var(--gold); }
+
   @media (max-width: 480px) {
     .link-cell .cell-text { max-width: 60px; }
   }
@@ -356,6 +384,7 @@
     </div>
     <div class="header-actions">
       <button class="btn btn-icon btn-secondary" id="offlineMgrBtn" title="Manage offline files" style="font-size:1rem;">📂</button>
+      <button class="btn btn-icon btn-secondary" id="importBtn" title="Import from Excel">📤</button>
       <button class="btn btn-icon btn-secondary" id="refreshBtn" title="Refresh from Supabase">🔄</button>
       <button class="btn btn-icon btn-secondary" id="exportBtn" title="Export to Excel">📥</button>
     </div>
@@ -412,6 +441,19 @@
 
 <!-- Hidden file input for loading local files -->
 <input type="file" id="fileInput" accept="audio/*,video/*" style="display:none;">
+<!-- Hidden file input for Excel import -->
+<input type="file" id="excelInput" accept=".xlsx,.xls,.csv" style="display:none;">
+
+<!-- Import Preview Modal -->
+<div id="importModal" class="modal-overlay" style="display:none;">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-header">
+      <h2>📤 Import from Excel</h2>
+      <button class="modal-close" id="importModalClose">✕</button>
+    </div>
+    <div class="modal-body" id="importModalBody"></div>
+  </div>
+</div>
 
 <div id="toast"></div>
 
@@ -1062,6 +1104,256 @@ function setupTouchDrag(tr) {
     }
   });
 }
+
+
+// ════════════════════════════════════════════
+// 📤  IMPORT FROM EXCEL
+// ════════════════════════════════════════════
+let importRows = [];
+let importColumns = [];
+let importMode = 'append'; // 'append' or 'replace'
+
+document.getElementById('importBtn').onclick = () => {
+  document.getElementById('excelInput').click();
+};
+
+document.getElementById('excelInput').onchange = (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  e.target.value = '';
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    try {
+      const wb = XLSX.read(ev.target.result, { type: 'array' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      if (!data || data.length < 2) { showToast('File is empty or has no data rows', 'error'); return; }
+      importColumns = (data[0] || []).map(c => String(c).trim());
+      importRows = data.slice(1).filter(row => row.some(cell => String(cell).trim() !== ''));
+      showImportModal();
+    } catch(err) {
+      showToast('Could not read file: ' + err.message, 'error');
+    }
+  };
+  reader.readAsArrayBuffer(file);
+};
+
+function guessCol(cols, hints) {
+  for (const h of hints) {
+    const idx = cols.findIndex(c => c.toLowerCase().includes(h.toLowerCase()));
+    if (idx !== -1) return idx;
+  }
+  return -1;
+}
+
+function showImportModal() {
+  const body = document.getElementById('importModalBody');
+  body.innerHTML = '';
+
+  // Auto-guess column mapping
+  let guessName   = guessCol(importColumns, ['song','name','title','track']);
+  let guessSinger = guessCol(importColumns, ['singer','singers','artist','performer','vocal']);
+  let guessLink   = guessCol(importColumns, ['karaoke','link','url','drive','youtube']);
+  if (guessName   === -1) guessName   = 0;
+  if (guessSinger === -1) guessSinger = importColumns.length > 1 ? 1 : -1;
+  if (guessLink   === -1) guessLink   = importColumns.length > 2 ? 2 : -1;
+
+  // Instructions
+  const inst = document.createElement('p');
+  inst.className = 'import-instructions';
+  inst.innerHTML = `Found <b style="color:var(--gold)">${importRows.length} rows</b> in the file. Map the columns below, then choose how to import.`;
+  body.appendChild(inst);
+
+  // Column mapping
+  const mapDiv = document.createElement('div');
+  mapDiv.className = 'import-col-map';
+  const fields = [
+    { id: 'mapName',   label: 'Song Name *',  guess: guessName },
+    { id: 'mapSinger', label: 'Singer(s)',     guess: guessSinger },
+    { id: 'mapLink',   label: 'Karaoke Link',  guess: guessLink },
+  ];
+  fields.forEach(f => {
+    const grp = document.createElement('div');
+    const lbl = document.createElement('label'); lbl.textContent = f.label;
+    const sel = document.createElement('select'); sel.id = f.id;
+    // "— skip —" option
+    const skipOpt = document.createElement('option'); skipOpt.value = '-1'; skipOpt.textContent = '— skip —';
+    sel.appendChild(skipOpt);
+    importColumns.forEach((col, i) => {
+      const opt = document.createElement('option'); opt.value = i; opt.textContent = col || `Column ${i+1}`;
+      sel.appendChild(opt);
+    });
+    sel.value = f.guess;
+    sel.onchange = () => updatePreview();
+    grp.appendChild(lbl); grp.appendChild(sel);
+    mapDiv.appendChild(grp);
+  });
+  body.appendChild(mapDiv);
+
+  // Import mode toggle
+  const modeRow = document.createElement('div');
+  modeRow.className = 'import-mode-row';
+  ['append','replace'].forEach(mode => {
+    const btn = document.createElement('button');
+    btn.className = 'import-mode-btn' + (importMode === mode ? ' active' : '');
+    btn.textContent = mode === 'append' ? '➕ Add to existing' : '🔄 Replace all songs';
+    btn.title = mode === 'append' ? 'New songs will be added after existing ones' : 'All current songs will be deleted and replaced';
+    btn.onclick = () => {
+      importMode = mode;
+      modeRow.querySelectorAll('.import-mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    };
+    modeRow.appendChild(btn);
+  });
+  body.appendChild(modeRow);
+
+  // Preview table
+  const summary = document.createElement('p');
+  summary.className = 'import-summary';
+  summary.id = 'importSummary';
+  body.appendChild(summary);
+
+  const previewWrap = document.createElement('div');
+  previewWrap.className = 'import-preview-wrap';
+  const previewTable = document.createElement('table');
+  previewTable.className = 'import-preview-table';
+  previewTable.id = 'importPreviewTable';
+  previewWrap.appendChild(previewTable);
+  body.appendChild(previewWrap);
+
+  // Actions
+  const actDiv = document.createElement('div');
+  actDiv.className = 'import-actions';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn btn-ghost'; cancelBtn.textContent = 'Cancel';
+  cancelBtn.onclick = () => { document.getElementById('importModal').style.display = 'none'; };
+  const confirmBtn = document.createElement('button');
+  confirmBtn.className = 'btn btn-primary'; confirmBtn.id = 'importConfirmBtn';
+  confirmBtn.textContent = '📤 Import Songs';
+  confirmBtn.onclick = () => executeImport();
+  actDiv.appendChild(cancelBtn); actDiv.appendChild(confirmBtn);
+  body.appendChild(actDiv);
+
+  updatePreview();
+  document.getElementById('importModal').style.display = 'flex';
+}
+
+function updatePreview() {
+  const nameIdx   = parseInt(document.getElementById('mapName')?.value ?? -1);
+  const singerIdx = parseInt(document.getElementById('mapSinger')?.value ?? -1);
+  const linkIdx   = parseInt(document.getElementById('mapLink')?.value ?? -1);
+
+  const preview = importRows.slice(0, 6);
+  const table = document.getElementById('importPreviewTable');
+  if (!table) return;
+  table.innerHTML = '';
+
+  // Header
+  const thead = table.createTHead();
+  const hr = thead.insertRow();
+  ['Song Name','Singer(s)','Karaoke Link'].forEach(h => {
+    const th = document.createElement('th'); th.textContent = h; hr.appendChild(th);
+  });
+
+  // Rows
+  const tbody = table.createTBody();
+  preview.forEach(row => {
+    const tr = tbody.insertRow();
+    const name   = nameIdx   >= 0 ? String(row[nameIdx]   || '').trim() : '—';
+    const singer = singerIdx >= 0 ? String(row[singerIdx] || '').trim() : '—';
+    const link   = linkIdx   >= 0 ? String(row[linkIdx]   || '').trim() : '—';
+    [name, singer, link].forEach(val => {
+      const td = tr.insertCell();
+      td.textContent = val || '—';
+    });
+  });
+
+  const valid = importRows.filter(row => {
+    const n = nameIdx >= 0 ? String(row[nameIdx]||'').trim() : '';
+    return n !== '';
+  }).length;
+
+  const summary = document.getElementById('importSummary');
+  if (summary) summary.innerHTML = `Preview (first ${Math.min(6,importRows.length)} of ${importRows.length} rows) · <b>${valid} valid songs</b> will be imported`;
+}
+
+async function executeImport() {
+  const nameIdx   = parseInt(document.getElementById('mapName')?.value ?? -1);
+  const singerIdx = parseInt(document.getElementById('mapSinger')?.value ?? -1);
+  const linkIdx   = parseInt(document.getElementById('mapLink')?.value ?? -1);
+
+  if (nameIdx < 0) { showToast('Please map the Song Name column', 'error'); return; }
+
+  const toImport = importRows
+    .map(row => ({
+      song_name:   String(row[nameIdx]   || '').trim(),
+      singers_raw: singerIdx >= 0 ? String(row[singerIdx] || '').trim() : '',
+      karaoke_link: linkIdx >= 0 ? String(row[linkIdx]   || '').trim() : '',
+    }))
+    .filter(r => r.song_name !== '');
+
+  if (!toImport.length) { showToast('No valid songs found to import', 'error'); return; }
+
+  const confirmBtn = document.getElementById('importConfirmBtn');
+  confirmBtn.disabled = true; confirmBtn.textContent = 'Importing…';
+
+  try {
+    // Parse singers: split by comma, semicolon, or &
+    const parsed = toImport.map((r, i) => {
+      const rawSingers = r.singers_raw;
+      let singers = [];
+      if (rawSingers) {
+        singers = rawSingers.split(/[,;&\/]+/).map(s => s.trim()).filter(Boolean);
+        // Validate against known cousins (flexible match)
+        singers = singers.map(s => {
+          const match = COUSINS.find(c => c.toLowerCase() === s.toLowerCase());
+          return match || s; // keep original if not found
+        });
+      }
+      return { song_name: r.song_name, singers, karaoke_link: r.karaoke_link };
+    });
+
+    if (importMode === 'replace') {
+      // Delete all existing songs first
+      if (songs.length > 0) {
+        const { error } = await supabase_client.from(TABLE).delete().in('id', songs.map(s=>s.id));
+        if (error) throw error;
+        // Clear offline files for deleted songs
+        for (const s of songs) {
+          try { await idbDeleteFile(s.id); delete offlineFileMap[s.id]; } catch(e) {}
+        }
+        songs = [];
+      }
+    }
+
+    // Insert new songs
+    let pos = songs.length ? Math.max(...songs.map(s=>s.position||0)) + 1 : 1;
+    const inserts = parsed.map((r, i) => ({
+      song_name: r.song_name, singers: r.singers,
+      karaoke_link: r.karaoke_link, position: pos + i
+    }));
+
+    const { data, error } = await supabase_client.from(TABLE).insert(inserts).select();
+    if (error) throw error;
+
+    songs = importMode === 'replace' ? data : [...songs, ...data];
+    songs.sort((a,b)=>(a.position||0)-(b.position||0));
+    renderTable();
+    setStatus(`${songs.length} songs`, 'ok');
+    document.getElementById('importModal').style.display = 'none';
+    showToast(`✅ Imported ${data.length} song${data.length!==1?'s':''}!`, 'success');
+  } catch(err) {
+    showToast('Import failed: ' + err.message, 'error');
+    confirmBtn.disabled = false; confirmBtn.textContent = '📤 Import Songs';
+  }
+}
+
+document.getElementById('importModalClose').onclick = () => {
+  document.getElementById('importModal').style.display = 'none';
+};
+document.getElementById('importModal').addEventListener('click', (e) => {
+  if (e.target === e.currentTarget) document.getElementById('importModal').style.display = 'none';
+});
 
 // ── EXPORT ──
 document.getElementById('exportBtn').onclick = () => {
