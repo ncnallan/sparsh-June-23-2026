@@ -3,361 +3,302 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Sparsh — June 13th 2026</title>
+<title>Setlist Manager</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Playfair+Display:wght@700;900&family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
 <style>
-  :root {
-    --gold: #FFD700;
-    --gold-dark: #C8A200;
-    --gold-light: #FFF0A0;
-    --purple: #2D1B69;
-    --purple-mid: #4A2E9E;
-    --purple-light: #7B5CF0;
-    --rose: #FF6B6B;
-    --teal: #00CED1;
-    --green: #4ade80;
-    --bg: #0F0A2E;
-    --surface: #1A1040;
-    --surface2: #231550;
-    --text: #F5F0FF;
-    --text-dim: #A89CC8;
-    --border: rgba(255,215,0,0.25);
-    --radius: 12px;
-    --shadow: 0 8px 32px rgba(0,0,0,0.4);
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body {
-    font-family: 'Poppins', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    background-image:
-      radial-gradient(ellipse at 20% 10%, rgba(123,92,240,0.2) 0%, transparent 50%),
-      radial-gradient(ellipse at 80% 90%, rgba(255,107,107,0.15) 0%, transparent 50%),
-      radial-gradient(ellipse at 50% 50%, rgba(45,27,105,0.5) 0%, transparent 80%);
-  }
+:root {
+  --gold:#FFD700; --gold-dark:#C8A200; --gold-light:#FFF0A0;
+  --purple:#2D1B69; --purple-mid:#4A2E9E; --purple-light:#7B5CF0;
+  --rose:#FF6B6B; --teal:#00CED1; --green:#4ade80;
+  --bg:#0F0A2E; --surface:#1A1040; --surface2:#231550;
+  --text:#F5F0FF; --text-dim:#A89CC8;
+  --border:rgba(255,215,0,0.25); --radius:12px; --shadow:0 8px 32px rgba(0,0,0,0.4);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+body{font-family:'Poppins',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+  background-image:radial-gradient(ellipse at 20% 10%,rgba(123,92,240,.2) 0%,transparent 50%),
+  radial-gradient(ellipse at 80% 90%,rgba(255,107,107,.15) 0%,transparent 50%),
+  radial-gradient(ellipse at 50% 50%,rgba(45,27,105,.5) 0%,transparent 80%);}
 
-  /* ── HEADER ── */
-  header {
-    background: linear-gradient(135deg, var(--purple) 0%, #1a0a50 50%, var(--purple-mid) 100%);
-    border-bottom: 2px solid var(--gold);
-    padding: 10px 14px;
-    position: sticky; top: 0; z-index: 100;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
-  }
-  .header-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-  .header-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
+/* HEADER */
+header{background:linear-gradient(135deg,var(--purple) 0%,#1a0a50 50%,var(--purple-mid) 100%);
+  border-bottom:2px solid var(--gold);padding:10px 14px;position:sticky;top:0;z-index:100;
+  box-shadow:0 4px 24px rgba(0,0,0,.5);}
+.header-top{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.header-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;}
+.title-block{display:flex;flex-direction:column;gap:2px;}
+.title-row{display:flex;align-items:center;gap:8px;}
+#sparshTitle{display:flex;flex-direction:row;align-items:center;gap:10px;
+  opacity:0;transform:translateX(-60px);
+  animation:slideInLeft .7s cubic-bezier(.22,1,.36,1) .2s forwards;line-height:1;}
+.mic-svg{width:clamp(1.6rem,6vw,2.2rem);height:clamp(1.6rem,6vw,2.2rem);flex-shrink:0;
+  filter:drop-shadow(0 0 8px rgba(255,215,0,.5));}
+.sparsh-text{font-family:'Cinzel Decorative',cursive;font-size:clamp(1.3rem,5.5vw,1.9rem);font-weight:700;
+  background:linear-gradient(90deg,#FFD700 0%,#fff0a0 40%,#7B5CF0 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  letter-spacing:.08em;filter:drop-shadow(0 0 12px rgba(255,215,0,.35));}
+.edit-title-btn{background:none;border:none;cursor:pointer;padding:2px 4px;opacity:.55;
+  font-size:.85rem;color:var(--gold-light);transition:opacity .15s;}
+.edit-title-btn:hover{opacity:1;}
+/* hide edit btn when viewing history */
+body.viewing-history .edit-title-btn{display:none;}
+.show-date{font-size:clamp(.65rem,2.6vw,.8rem);color:var(--gold-light);font-weight:500;
+  letter-spacing:.08em;padding-left:2px;opacity:0;transform:translateX(-40px);
+  animation:slideInLeft .6s cubic-bezier(.22,1,.36,1) .5s forwards;}
+@keyframes slideInLeft{to{opacity:1;transform:translateX(0);}}
 
-  /* ── TITLE ── */
-  .title-block { display: flex; flex-direction: column; gap: 2px; }
-  #sparshTitle {
-    display: flex; flex-direction: row; align-items: center; gap: 10px;
-    opacity: 0; transform: translateX(-60px);
-    animation: slideInLeft 0.7s cubic-bezier(0.22,1,0.36,1) 0.2s forwards;
-    line-height: 1;
-  }
-  .mic-svg {
-    width: clamp(1.6rem, 6vw, 2.2rem); height: clamp(1.6rem, 6vw, 2.2rem);
-    flex-shrink: 0; filter: drop-shadow(0 0 8px rgba(255,215,0,0.5));
-  }
-  .sparsh-text {
-    font-family: 'Cinzel Decorative', cursive;
-    font-size: clamp(1.3rem, 5.5vw, 1.9rem); font-weight: 700;
-    background: linear-gradient(90deg, #FFD700 0%, #fff0a0 40%, #7B5CF0 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    background-clip: text; letter-spacing: 0.08em;
-    filter: drop-shadow(0 0 12px rgba(255,215,0,0.35));
-  }
-  .show-date {
-    font-size: clamp(0.65rem, 2.6vw, 0.8rem); color: var(--gold-light);
-    font-weight: 500; letter-spacing: 0.08em; padding-left: 2px;
-    opacity: 0; transform: translateX(-40px);
-    animation: slideInLeft 0.6s cubic-bezier(0.22,1,0.36,1) 0.5s forwards;
-  }
-  @keyframes slideInLeft { to { opacity: 1; transform: translateX(0); } }
+/* STATUS PILL in header */
+.prog-status-pill{font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:10px;white-space:nowrap;
+  font-family:'Poppins',sans-serif;letter-spacing:.04em;}
+.prog-status-pill.active{background:rgba(74,222,128,.15);color:var(--green);border:1px solid rgba(74,222,128,.3);}
+.prog-status-pill.ended{background:rgba(255,107,107,.15);color:var(--rose);border:1px solid rgba(255,107,107,.3);}
+.prog-status-pill.history{background:rgba(0,206,209,.15);color:var(--teal);border:1px solid rgba(0,206,209,.3);}
 
-  /* ── BUTTONS ── */
-  .btn {
-    border: none; cursor: pointer; border-radius: 8px;
-    font-family: 'Poppins', sans-serif; font-weight: 600;
-    display: inline-flex; align-items: center; gap: 6px;
-    transition: all 0.18s ease; white-space: nowrap;
-    font-size: clamp(0.75rem, 3vw, 0.875rem);
-  }
-  .btn-icon { width: 40px; height: 40px; padding: 0; justify-content: center; font-size: 1.1rem; border-radius: 10px; }
-  .btn-primary { background: linear-gradient(135deg, var(--gold), var(--gold-dark)); color: #1a0a50; padding: 10px 18px; }
-  .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
-  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); padding: 10px 16px; }
-  .btn-secondary:hover { border-color: var(--gold); background: var(--purple); }
-  .btn-ghost { background: transparent; color: var(--gold); border: 1px solid var(--border); padding: 8px 14px; }
-  .btn-ghost:hover { background: rgba(255,215,0,0.1); }
-  .btn-danger { background: rgba(255,107,107,0.15); color: var(--rose); border: 1px solid rgba(255,107,107,0.3); padding: 8px 12px; }
-  .btn-danger:hover { background: rgba(255,107,107,0.25); }
-  .btn-offline {
-    background: rgba(74,222,128,0.12); color: var(--green);
-    border: 1px solid rgba(74,222,128,0.35); padding: 4px 8px;
-    border-radius: 6px; font-size: 0.7rem; font-weight: 600;
-    cursor: pointer; white-space: nowrap; font-family: 'Poppins', sans-serif;
-    transition: all 0.15s; display: inline-flex; align-items: center; gap: 4px;
-  }
-  .btn-offline:hover { background: rgba(74,222,128,0.22); }
-  .btn-offline.has-file { background: rgba(74,222,128,0.2); border-color: var(--green); }
-  .btn-offline.uploading { opacity: 0.6; cursor: default; }
-  .btn-sm { font-size: 0.75rem; padding: 6px 10px; }
-  .btn:active { transform: scale(0.96); }
+/* BUTTONS */
+.btn{border:none;cursor:pointer;border-radius:8px;font-family:'Poppins',sans-serif;font-weight:600;
+  display:inline-flex;align-items:center;gap:6px;transition:all .18s ease;white-space:nowrap;
+  font-size:clamp(.75rem,3vw,.875rem);}
+.btn-icon{width:38px;height:38px;padding:0;justify-content:center;font-size:1rem;border-radius:10px;}
+.btn-primary{background:linear-gradient(135deg,var(--gold),var(--gold-dark));color:#1a0a50;padding:9px 16px;}
+.btn-primary:hover{filter:brightness(1.1);transform:translateY(-1px);}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border);padding:9px 14px;}
+.btn-secondary:hover{border-color:var(--gold);background:var(--purple);}
+.btn-ghost{background:transparent;color:var(--gold);border:1px solid var(--border);padding:7px 12px;}
+.btn-ghost:hover{background:rgba(255,215,0,.1);}
+.btn-danger{background:rgba(255,107,107,.15);color:var(--rose);border:1px solid rgba(255,107,107,.3);padding:7px 10px;}
+.btn-danger:hover{background:rgba(255,107,107,.25);}
+.btn-end{background:linear-gradient(135deg,rgba(255,107,107,.2),rgba(255,107,107,.1));
+  color:var(--rose);border:1px solid rgba(255,107,107,.4);padding:7px 12px;}
+.btn-end:hover{background:rgba(255,107,107,.25);}
+.btn-newshow{background:linear-gradient(135deg,rgba(74,222,128,.2),rgba(74,222,128,.1));
+  color:var(--green);border:1px solid rgba(74,222,128,.4);padding:7px 12px;}
+.btn-newshow:hover{background:rgba(74,222,128,.25);}
+.btn-offline{background:rgba(74,222,128,.12);color:var(--green);border:1px solid rgba(74,222,128,.35);
+  padding:4px 8px;border-radius:6px;font-size:.7rem;font-weight:600;cursor:pointer;white-space:nowrap;
+  font-family:'Poppins',sans-serif;transition:all .15s;display:inline-flex;align-items:center;gap:4px;}
+.btn-offline:hover{background:rgba(74,222,128,.22);}
+.btn-sm{font-size:.75rem;padding:5px 9px;}
+.btn:active{transform:scale(.96);}
 
-  /* ── TOOLBAR ── */
-  .toolbar {
-    padding: 8px 12px;
-    display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
-    border-bottom: 1px solid var(--border);
-    background: var(--surface);
-  }
-  .toolbar .spacer { flex: 1; }
-  #status-msg {
-    font-size: 0.75rem; color: var(--text-dim);
-    padding: 4px 10px; background: var(--surface2);
-    border-radius: 20px; border: 1px solid var(--border); flex-shrink: 0;
-  }
-  #status-msg.ok { color: #7fff9a; border-color: rgba(127,255,154,0.3); }
-  #status-msg.err { color: var(--rose); border-color: rgba(255,107,107,0.3); }
+/* TOOLBAR */
+.toolbar{padding:8px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+  border-bottom:1px solid var(--border);background:var(--surface);}
+.toolbar .spacer{flex:1;}
+#status-msg{font-size:.75rem;color:var(--text-dim);padding:4px 10px;background:var(--surface2);
+  border-radius:20px;border:1px solid var(--border);flex-shrink:0;}
+#status-msg.ok{color:#7fff9a;border-color:rgba(127,255,154,.3);}
+#status-msg.err{color:var(--rose);border-color:rgba(255,107,107,.3);}
 
-  /* ── TABLE ── */
-  .table-wrap { padding: 8px 8px 80px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  table { width: 100%; border-collapse: separate; border-spacing: 0 4px; min-width: 520px; }
-  thead tr { background: transparent; }
-  thead th {
-    padding: 7px 8px; text-align: left;
-    font-size: clamp(0.68rem, 2.3vw, 0.78rem);
-    text-transform: uppercase; letter-spacing: 0.08em;
-    color: var(--gold); font-weight: 700;
-    border-bottom: 1px solid var(--border);
-  }
-  thead th:first-child { width: 36px; text-align: center; }
-  thead th:nth-child(2) { width: 42px; text-align: center; }
-  tbody tr {
-    background: var(--surface); border-radius: var(--radius);
-    transition: background 0.15s, box-shadow 0.15s; cursor: grab;
-  }
-  tbody tr:hover { background: var(--surface2); box-shadow: 0 4px 16px rgba(123,92,240,0.2); }
-  tbody tr.dragging { opacity: 0.5; cursor: grabbing; }
-  tbody tr.drag-over { box-shadow: 0 0 0 2px var(--gold); background: rgba(255,215,0,0.08); }
-  tbody td {
-    padding: 7px 8px; font-size: clamp(0.78rem, 2.8vw, 0.88rem);
-    vertical-align: middle;
-    border-top: 1px solid rgba(255,255,255,0.04);
-    border-bottom: 1px solid rgba(255,255,255,0.04);
-  }
-  tbody td:first-child { border-radius: var(--radius) 0 0 var(--radius); border-left: 1px solid rgba(255,255,255,0.06); }
-  tbody td:last-child { border-radius: 0 var(--radius) var(--radius) 0; border-right: 1px solid rgba(255,255,255,0.06); }
-  .drag-handle { cursor: grab; color: var(--text-dim); font-size: 1.1rem; text-align: center; user-select: none; touch-action: none; }
-  .row-num { font-family: 'Playfair Display', serif; font-weight: 700; color: var(--gold); font-size: clamp(1rem, 4vw, 1.15rem); text-align: center; min-width: 36px; }
+/* HISTORY BANNER */
+.history-banner{display:none;margin:8px 8px 0;padding:10px 14px;
+  background:rgba(0,206,209,.08);border:1.5px solid rgba(0,206,209,.3);
+  border-radius:var(--radius);align-items:center;gap:10px;flex-wrap:wrap;}
+.history-banner.show{display:flex;}
+.history-banner-text{flex:1;font-size:.82rem;color:var(--teal);}
+.history-banner-text b{font-size:.9rem;}
 
-  /* ── INLINE EDIT ── */
-  .cell-text { cursor: pointer; min-height: 1.4em; }
-  .cell-text:hover { color: var(--gold-light); }
-  .cell-input {
-    background: rgba(255,255,255,0.07); border: 1.5px solid var(--purple-light);
-    color: var(--text); border-radius: 6px; padding: 6px 10px;
-    font-family: 'Poppins', sans-serif; font-size: inherit;
-    width: 100%; outline: none; transition: border-color 0.15s;
-  }
-  .cell-input:focus { border-color: var(--gold); }
+/* READ-ONLY table tweaks */
+body.viewing-history tbody tr{cursor:default !important;}
+body.viewing-history .drag-handle{opacity:.2;pointer-events:none;}
+body.viewing-history .cell-text{cursor:default !important;}
+body.viewing-history .cell-text:hover{color:inherit !important;}
+body.viewing-history .singers-display{cursor:default !important;}
 
-  /* ── SINGERS ── */
-  .singers-display { display: flex; flex-wrap: wrap; gap: 4px; cursor: pointer; }
-  .singer-chip {
-    background: linear-gradient(135deg, var(--purple-mid), var(--purple-light));
-    color: #fff; border-radius: 20px; padding: 3px 10px;
-    font-size: clamp(0.65rem, 2.5vw, 0.75rem); font-weight: 600; white-space: nowrap;
-  }
-  .singer-chip.empty { background: var(--surface2); color: var(--text-dim); border: 1px dashed var(--border); }
-  .singers-popup {
-    position: fixed; z-index: 500;
-    background: var(--surface2); border: 1.5px solid var(--purple-light);
-    border-radius: var(--radius); padding: 14px; box-shadow: var(--shadow);
-    min-width: 200px; max-width: 280px;
-  }
-  .singers-popup h4 { color: var(--gold); font-size: 0.8rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
-  .singer-option {
-    display: flex; align-items: center; gap: 10px;
-    padding: 8px 10px; border-radius: 8px; cursor: pointer;
-    margin-bottom: 4px; transition: background 0.12s;
-    font-size: clamp(0.85rem, 3vw, 0.95rem);
-  }
-  .singer-option:hover { background: rgba(123,92,240,0.2); }
-  .singer-option input[type=checkbox] { width: 18px; height: 18px; accent-color: var(--gold); cursor: pointer; }
-  .singers-popup-footer { margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end; }
+/* TABLE */
+.table-wrap{padding:8px 8px 80px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+table{width:100%;border-collapse:separate;border-spacing:0 4px;min-width:520px;}
+thead tr{background:transparent;}
+thead th{padding:7px 8px;text-align:left;font-size:clamp(.68rem,2.3vw,.78rem);
+  text-transform:uppercase;letter-spacing:.08em;color:var(--gold);font-weight:700;
+  border-bottom:1px solid var(--border);}
+thead th:first-child{width:36px;text-align:center;}
+thead th:nth-child(2){width:42px;text-align:center;}
+tbody tr{background:var(--surface);border-radius:var(--radius);
+  transition:background .15s,box-shadow .15s;cursor:grab;}
+tbody tr:hover{background:var(--surface2);box-shadow:0 4px 16px rgba(123,92,240,.2);}
+tbody tr.dragging{opacity:.5;cursor:grabbing;}
+tbody tr.drag-over{box-shadow:0 0 0 2px var(--gold);background:rgba(255,215,0,.08);}
+tbody td{padding:7px 8px;font-size:clamp(.78rem,2.8vw,.88rem);vertical-align:middle;
+  border-top:1px solid rgba(255,255,255,.04);border-bottom:1px solid rgba(255,255,255,.04);}
+tbody td:first-child{border-radius:var(--radius) 0 0 var(--radius);border-left:1px solid rgba(255,255,255,.06);}
+tbody td:last-child{border-radius:0 var(--radius) var(--radius) 0;border-right:1px solid rgba(255,255,255,.06);}
+.drag-handle{cursor:grab;color:var(--text-dim);font-size:1.1rem;text-align:center;user-select:none;touch-action:none;}
+.row-num{font-family:'Playfair Display',serif;font-weight:700;color:var(--gold);font-size:clamp(1rem,4vw,1.15rem);text-align:center;min-width:36px;}
 
-  /* ── KARAOKE CELL ── */
-  .link-cell { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
-  .link-cell .cell-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 90px; font-size: 0.75rem; color: var(--text-dim); cursor: pointer; }
-  .link-cell .cell-text:hover { color: var(--gold-light); }
+/* INLINE EDIT */
+.cell-text{cursor:pointer;min-height:1.4em;}
+.cell-text:hover{color:var(--gold-light);}
+.cell-input{background:rgba(255,255,255,.07);border:1.5px solid var(--purple-light);
+  color:var(--text);border-radius:6px;padding:6px 10px;font-family:'Poppins',sans-serif;
+  font-size:inherit;width:100%;outline:none;transition:border-color .15s;}
+.cell-input:focus{border-color:var(--gold);}
 
-  /* play button — online (teal) */
-  .play-btn {
-    background: linear-gradient(135deg, #00CED1, #007a7c);
-    border: none; border-radius: 50%; width: 28px; height: 28px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; flex-shrink: 0; font-size: 0.75rem;
-    transition: transform 0.15s, filter 0.15s; color: #fff;
-  }
-  .play-btn:hover { transform: scale(1.15); filter: brightness(1.2); }
-  .play-btn:disabled { opacity: 0.3; cursor: default; }
+/* SINGERS */
+.singers-display{display:flex;flex-wrap:wrap;gap:4px;cursor:pointer;}
+.singer-chip{background:linear-gradient(135deg,var(--purple-mid),var(--purple-light));
+  color:#fff;border-radius:20px;padding:3px 10px;font-size:clamp(.65rem,2.5vw,.75rem);font-weight:600;white-space:nowrap;}
+.singer-chip.empty{background:var(--surface2);color:var(--text-dim);border:1px dashed var(--border);}
+.singers-popup{position:fixed;z-index:500;background:var(--surface2);border:1.5px solid var(--purple-light);
+  border-radius:var(--radius);padding:14px;box-shadow:var(--shadow);min-width:200px;max-width:280px;}
+.singers-popup h4{color:var(--gold);font-size:.8rem;margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em;}
+.singer-option{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;cursor:pointer;
+  margin-bottom:4px;transition:background .12s;font-size:clamp(.85rem,3vw,.95rem);}
+.singer-option:hover{background:rgba(123,92,240,.2);}
+.singer-option input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold);cursor:pointer;}
+.singers-popup-footer{margin-top:10px;display:flex;gap:8px;justify-content:flex-end;}
 
-  /* play button — offline (green) */
-  .play-btn-offline {
-    background: linear-gradient(135deg, #22c55e, #15803d);
-    border: none; border-radius: 50%; width: 28px; height: 28px;
-    display: flex; align-items: center; justify-content: center;
-    cursor: pointer; flex-shrink: 0; font-size: 0.75rem;
-    transition: transform 0.15s, filter 0.15s; color: #fff;
-  }
-  .play-btn-offline:hover { transform: scale(1.15); filter: brightness(1.15); }
+/* KARAOKE CELL */
+.link-cell{display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.link-cell .cell-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:90px;font-size:.75rem;color:var(--text-dim);cursor:pointer;}
+.link-cell .cell-text:hover{color:var(--gold-light);}
+.play-btn{background:linear-gradient(135deg,#00CED1,#007a7c);border:none;border-radius:50%;width:28px;height:28px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:.75rem;
+  transition:transform .15s,filter .15s;color:#fff;}
+.play-btn:hover{transform:scale(1.15);filter:brightness(1.2);}
+.play-btn:disabled{opacity:.3;cursor:default;}
+.play-btn-offline{background:linear-gradient(135deg,#22c55e,#15803d);border:none;border-radius:50%;width:28px;height:28px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:.75rem;
+  transition:transform .15s,filter .15s;color:#fff;}
+.play-btn-offline:hover{transform:scale(1.15);filter:brightness(1.15);}
+.offline-badge{font-size:.6rem;background:rgba(74,222,128,.15);color:var(--green);
+  border:1px solid rgba(74,222,128,.3);border-radius:10px;padding:1px 5px;white-space:nowrap;}
+.row-actions{display:flex;gap:5px;align-items:center;}
 
-  /* offline badge on row */
-  .offline-badge {
-    font-size: 0.6rem; background: rgba(74,222,128,0.15);
-    color: var(--green); border: 1px solid rgba(74,222,128,0.3);
-    border-radius: 10px; padding: 1px 5px; white-space: nowrap;
-  }
+/* ADD FORM */
+.add-form{margin:0 12px 12px;padding:16px 18px;background:var(--surface2);border-radius:var(--radius);
+  border:1.5px solid var(--purple-light);animation:slideDown .2s ease;}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.add-form h3{color:var(--gold);font-size:.9rem;margin-bottom:14px;text-transform:uppercase;letter-spacing:.06em;}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-grid .full{grid-column:1/-1;}
+.form-group label{font-size:.72rem;color:var(--text-dim);display:block;margin-bottom:4px;text-transform:uppercase;letter-spacing:.06em;}
+.form-input{width:100%;background:rgba(255,255,255,.06);border:1.5px solid var(--border);color:var(--text);
+  border-radius:8px;padding:9px 12px;font-family:'Poppins',sans-serif;font-size:clamp(.85rem,3vw,.95rem);outline:none;transition:border-color .15s;}
+.form-input:focus{border-color:var(--gold);}
+.form-singers{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;}
+.form-singer-btn{border:1.5px solid var(--border);background:var(--surface);color:var(--text-dim);
+  border-radius:20px;padding:5px 14px;cursor:pointer;font-family:'Poppins',sans-serif;
+  font-size:clamp(.75rem,3vw,.85rem);transition:all .15s;}
+.form-singer-btn.selected{background:var(--purple-mid);border-color:var(--purple-light);color:#fff;font-weight:600;}
+.form-actions{margin-top:14px;display:flex;gap:8px;justify-content:flex-end;}
 
-  /* ── ADD SONG FORM ── */
-  .add-form {
-    margin: 0 12px 12px; padding: 16px 18px;
-    background: var(--surface2); border-radius: var(--radius);
-    border: 1.5px solid var(--purple-light);
-    animation: slideDown 0.2s ease;
-  }
-  @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-  .add-form h3 { color: var(--gold); font-size: 0.9rem; margin-bottom: 14px; text-transform: uppercase; letter-spacing: 0.06em; }
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .form-grid .full { grid-column: 1 / -1; }
-  .form-group label { font-size: 0.72rem; color: var(--text-dim); display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.06em; }
-  .form-input {
-    width: 100%; background: rgba(255,255,255,0.06); border: 1.5px solid var(--border);
-    color: var(--text); border-radius: 8px; padding: 9px 12px;
-    font-family: 'Poppins', sans-serif; font-size: clamp(0.85rem, 3vw, 0.95rem);
-    outline: none; transition: border-color 0.15s;
-  }
-  .form-input:focus { border-color: var(--gold); }
-  .form-singers { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
-  .form-singer-btn {
-    border: 1.5px solid var(--border); background: var(--surface); color: var(--text-dim);
-    border-radius: 20px; padding: 5px 14px; cursor: pointer; font-family: 'Poppins', sans-serif;
-    font-size: clamp(0.75rem, 3vw, 0.85rem); transition: all 0.15s;
-  }
-  .form-singer-btn.selected { background: var(--purple-mid); border-color: var(--purple-light); color: #fff; font-weight: 600; }
-  .form-actions { margin-top: 14px; display: flex; gap: 8px; justify-content: flex-end; }
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;padding:16px;}
+.modal{background:var(--surface2);border-radius:16px;border:1.5px solid var(--purple-light);
+  width:100%;max-width:520px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.6);max-height:90vh;overflow-y:auto;}
+.modal-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;
+  border-bottom:1px solid var(--border);gap:10px;position:sticky;top:0;background:var(--surface2);z-index:1;}
+.modal-header h2{font-family:'Playfair Display',serif;font-size:clamp(1rem,4vw,1.2rem);color:var(--gold);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.modal-source-badge{font-size:.68rem;padding:2px 8px;border-radius:10px;white-space:nowrap;font-weight:600;font-family:'Poppins',sans-serif;}
+.modal-source-badge.online{background:rgba(0,206,209,.15);color:var(--teal);border:1px solid rgba(0,206,209,.3);}
+.modal-source-badge.offline{background:rgba(74,222,128,.15);color:var(--green);border:1px solid rgba(74,222,128,.3);}
+.modal-close{background:none;border:none;color:var(--text-dim);font-size:1.4rem;cursor:pointer;padding:4px;flex-shrink:0;}
+.modal-close:hover{color:var(--rose);}
+.modal-body{padding:16px;}
+.video-wrap{position:relative;padding-top:56.25%;border-radius:10px;overflow:hidden;background:#000;}
+.video-wrap iframe,.video-wrap video{position:absolute;inset:0;width:100%;height:100%;}
+.video-link-msg{color:var(--text-dim);font-size:.9rem;text-align:center;padding:20px;}
+.video-link-msg a{color:var(--teal);text-decoration:none;}
 
-  /* ── MODAL ── */
-  .modal-overlay {
-    position: fixed; inset: 0; z-index: 1000;
-    background: rgba(0,0,0,0.85); backdrop-filter: blur(6px);
-    display: flex; align-items: center; justify-content: center; padding: 20px;
-  }
-  .modal { background: var(--surface2); border-radius: 16px; border: 1.5px solid var(--purple-light); width: 100%; max-width: 560px; overflow: hidden; box-shadow: 0 24px 64px rgba(0,0,0,0.6); }
-  .modal-header { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border); gap: 10px; }
-  .modal-header h2 { font-family: 'Playfair Display', serif; font-size: clamp(1rem, 4vw, 1.2rem); color: var(--gold); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .modal-source-badge { font-size: 0.68rem; padding: 2px 8px; border-radius: 10px; white-space: nowrap; font-weight: 600; font-family: 'Poppins', sans-serif; }
-  .modal-source-badge.online { background: rgba(0,206,209,0.15); color: var(--teal); border: 1px solid rgba(0,206,209,0.3); }
-  .modal-source-badge.offline { background: rgba(74,222,128,0.15); color: var(--green); border: 1px solid rgba(74,222,128,0.3); }
-  .modal-close { background: none; border: none; color: var(--text-dim); font-size: 1.4rem; cursor: pointer; padding: 4px; flex-shrink: 0; }
-  .modal-close:hover { color: var(--rose); }
-  .modal-body { padding: 16px; }
-  .video-wrap { position: relative; padding-top: 56.25%; border-radius: 10px; overflow: hidden; background: #000; }
-  .video-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; }
-  .video-wrap video { position: absolute; inset: 0; width: 100%; height: 100%; background: #000; }
-  .video-link-msg { color: var(--text-dim); font-size: 0.9rem; text-align: center; padding: 20px; }
-  .video-link-msg a { color: var(--teal); text-decoration: none; }
+/* HISTORY PANEL */
+.history-panel{margin:0 8px 8px;padding:16px;background:var(--surface2);border-radius:var(--radius);
+  border:1.5px solid rgba(0,206,209,.3);animation:slideDown .2s ease;}
+.history-panel h3{color:var(--teal);font-size:.82rem;margin-bottom:12px;text-transform:uppercase;letter-spacing:.06em;}
+.history-list{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow-y:auto;}
+.history-item{display:flex;align-items:center;gap:10px;background:var(--surface);border-radius:9px;
+  padding:10px 12px;cursor:pointer;transition:background .15s;border:1.5px solid transparent;}
+.history-item:hover{background:rgba(0,206,209,.08);border-color:rgba(0,206,209,.2);}
+.history-item.active-prog{border-color:rgba(74,222,128,.4);background:rgba(74,222,128,.06);}
+.history-item.viewing{border-color:var(--teal);background:rgba(0,206,209,.1);}
+.history-item-info{flex:1;min-width:0;}
+.history-item-name{font-weight:700;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.history-item-meta{font-size:.72rem;color:var(--text-dim);margin-top:2px;}
+.history-item-badge{font-size:.65rem;font-weight:700;padding:2px 7px;border-radius:8px;white-space:nowrap;flex-shrink:0;}
+.badge-active{background:rgba(74,222,128,.15);color:var(--green);border:1px solid rgba(74,222,128,.3);}
+.badge-ended{background:rgba(165,165,165,.1);color:var(--text-dim);border:1px solid rgba(165,165,165,.2);}
 
-  /* ── FILE LOAD PROGRESS ── */
-  .file-progress {
-    margin-top: 8px; height: 3px; border-radius: 2px;
-    background: rgba(255,255,255,0.1); overflow: hidden; display: none;
-  }
-  .file-progress-bar { height: 100%; background: var(--green); width: 0; transition: width 0.2s; border-radius: 2px; }
+/* IMPORT */
+.import-instructions{font-size:.82rem;color:var(--text-dim);margin-bottom:14px;line-height:1.6;}
+.import-col-map{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+.import-col-map label{font-size:.72rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;display:block;margin-bottom:4px;}
+.import-col-map select{width:100%;background:rgba(255,255,255,.06);border:1.5px solid var(--border);
+  color:var(--text);border-radius:8px;padding:7px 10px;font-family:'Poppins',sans-serif;font-size:.82rem;outline:none;}
+.import-col-map select:focus{border-color:var(--gold);}
+.import-preview-wrap{max-height:200px;overflow-y:auto;margin-bottom:14px;border-radius:8px;border:1px solid var(--border);}
+.import-preview-table{width:100%;border-collapse:collapse;font-size:.78rem;}
+.import-preview-table th{padding:6px 10px;background:var(--surface);color:var(--gold);text-align:left;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;position:sticky;top:0;}
+.import-preview-table td{padding:6px 10px;border-top:1px solid rgba(255,255,255,.05);color:var(--text-dim);}
+.import-summary{font-size:.8rem;color:var(--text-dim);margin-bottom:12px;}
+.import-summary b{color:var(--green);}
+.import-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;}
+.import-mode-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.import-mode-btn{flex:1;min-width:120px;padding:8px 12px;border-radius:8px;border:1.5px solid var(--border);
+  background:var(--surface);color:var(--text-dim);cursor:pointer;font-family:'Poppins',sans-serif;
+  font-size:.78rem;font-weight:600;text-align:center;transition:all .15s;}
+.import-mode-btn.active{border-color:var(--gold);background:rgba(255,215,0,.1);color:var(--gold);}
 
-  /* ── OFFLINE PANEL (manage files) ── */
-  .offline-panel {
-    margin: 0 8px 8px; padding: 14px 16px;
-    background: rgba(74,222,128,0.06); border-radius: var(--radius);
-    border: 1.5px solid rgba(74,222,128,0.25);
-    animation: slideDown 0.2s ease;
-  }
-  .offline-panel h3 { color: var(--green); font-size: 0.82rem; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.06em; display: flex; align-items: center; gap: 6px; }
-  .offline-panel p { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 12px; line-height: 1.5; }
-  .offline-list { display: flex; flex-direction: column; gap: 6px; }
-  .offline-item {
-    display: flex; align-items: center; gap: 8px;
-    background: var(--surface2); border-radius: 8px; padding: 8px 10px;
-    font-size: 0.82rem;
-  }
-  .offline-item .song-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .offline-item .file-status { font-size: 0.7rem; white-space: nowrap; }
-  .offline-item .file-status.saved { color: var(--green); }
-  .offline-item .file-status.none { color: var(--text-dim); }
+/* OFFLINE PANEL */
+.offline-panel{margin:0 8px 8px;padding:14px 16px;background:rgba(74,222,128,.06);border-radius:var(--radius);
+  border:1.5px solid rgba(74,222,128,.25);animation:slideDown .2s ease;}
+.offline-panel h3{color:var(--green);font-size:.82rem;margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em;}
+.offline-panel p{font-size:.8rem;color:var(--text-dim);margin-bottom:12px;line-height:1.5;}
+.offline-list{display:flex;flex-direction:column;gap:6px;}
+.offline-item{display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:8px;padding:8px 10px;font-size:.82rem;}
+.offline-item .song-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.offline-item .file-status{font-size:.7rem;white-space:nowrap;}
+.offline-item .file-status.saved{color:var(--green);}
+.offline-item .file-status.none{color:var(--text-dim);}
 
-  /* ── LOADING / EMPTY ── */
-  .loading-wrap { padding: 60px 20px; text-align: center; }
-  .spinner { width: 40px; height: 40px; border: 3px solid var(--border); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .empty-state { padding: 60px 20px; text-align: center; color: var(--text-dim); }
-  .empty-state .icon { font-size: 3rem; margin-bottom: 12px; }
+/* LOADING / EMPTY */
+.loading-wrap{padding:60px 20px;text-align:center;}
+.spinner{width:40px;height:40px;border:3px solid var(--border);border-top-color:var(--gold);
+  border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 16px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.empty-state{padding:60px 20px;text-align:center;color:var(--text-dim);}
+.empty-state .icon{font-size:3rem;margin-bottom:12px;}
 
-  /* ── TOAST ── */
-  #toast {
-    position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px);
-    background: var(--surface2); border: 1px solid var(--border); border-radius: 24px;
-    padding: 10px 22px; font-size: 0.875rem; z-index: 2000;
-    transition: transform 0.3s ease, opacity 0.3s ease; opacity: 0; pointer-events: none;
-    box-shadow: var(--shadow); white-space: nowrap;
-  }
-  #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-  #toast.success { border-color: rgba(127,255,154,0.4); color: #7fff9a; }
-  #toast.error { border-color: rgba(255,107,107,0.4); color: var(--rose); }
-  #toast.info { border-color: rgba(0,206,209,0.4); color: var(--teal); }
+/* TOAST */
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--surface2);border:1px solid var(--border);border-radius:24px;
+  padding:10px 22px;font-size:.875rem;z-index:2000;transition:transform .3s ease,opacity .3s ease;
+  opacity:0;pointer-events:none;box-shadow:var(--shadow);white-space:nowrap;}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+#toast.success{border-color:rgba(127,255,154,.4);color:#7fff9a;}
+#toast.error{border-color:rgba(255,107,107,.4);color:var(--rose);}
+#toast.info{border-color:rgba(0,206,209,.4);color:var(--teal);}
 
-  /* ── SCROLLBAR ── */
-  ::-webkit-scrollbar { width: 4px; height: 4px; }
-  ::-webkit-scrollbar-track { background: var(--bg); }
-  ::-webkit-scrollbar-thumb { background: var(--purple-mid); border-radius: 2px; }
+/* QUICK SWITCH DROPDOWN */
+.active-switcher{position:relative;display:inline-flex;align-items:center;}
+.active-switcher-btn{background:rgba(74,222,128,.1);border:1px solid rgba(74,222,128,.3);
+  color:var(--green);border-radius:8px;padding:3px 8px 3px 10px;font-family:'Poppins',sans-serif;
+  font-size:.68rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:5px;
+  transition:all .15s;white-space:nowrap;max-width:140px;}
+.active-switcher-btn:hover{background:rgba(74,222,128,.2);}
+.active-switcher-btn .sw-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.active-switcher-btn .sw-arrow{flex-shrink:0;font-size:.6rem;transition:transform .15s;}
+.active-switcher-btn.open .sw-arrow{transform:rotate(180deg);}
+.switcher-dropdown{position:absolute;top:calc(100% + 6px);left:0;min-width:200px;max-width:260px;
+  background:var(--surface2);border:1.5px solid rgba(74,222,128,.3);border-radius:var(--radius);
+  box-shadow:var(--shadow);z-index:300;overflow:hidden;animation:slideDown .15s ease;}
+.switcher-item{display:flex;align-items:center;gap:8px;padding:10px 12px;cursor:pointer;
+  font-size:.82rem;transition:background .12s;border-bottom:1px solid rgba(255,255,255,.04);}
+.switcher-item:last-child{border-bottom:none;}
+.switcher-item:hover{background:rgba(74,222,128,.08);}
+.switcher-item.current{background:rgba(74,222,128,.1);cursor:default;}
+.switcher-item-name{flex:1;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.switcher-item-date{font-size:.7rem;color:var(--text-dim);white-space:nowrap;}
+.switcher-item-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;}
+.switcher-item.current .switcher-item-dot{box-shadow:0 0 6px var(--green);}
+/* hide switcher when only 1 active show */
+.active-switcher.single{display:none;}
 
-  .row-actions { display: flex; gap: 5px; align-items: center; }
-
-  /* ── IMPORT MODAL ── */
-  .import-instructions { font-size: 0.82rem; color: var(--text-dim); margin-bottom: 14px; line-height: 1.6; }
-  .import-instructions b { color: var(--gold); }
-  .import-col-map { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
-  .import-col-map label { font-size: 0.72rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 4px; }
-  .import-col-map select {
-    width: 100%; background: rgba(255,255,255,0.06); border: 1.5px solid var(--border);
-    color: var(--text); border-radius: 8px; padding: 7px 10px;
-    font-family: 'Poppins', sans-serif; font-size: 0.82rem; outline: none;
-  }
-  .import-col-map select:focus { border-color: var(--gold); }
-  .import-preview-wrap { max-height: 220px; overflow-y: auto; margin-bottom: 14px; border-radius: 8px; border: 1px solid var(--border); }
-  .import-preview-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
-  .import-preview-table th { padding: 6px 10px; background: var(--surface); color: var(--gold); text-align: left; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.06em; position: sticky; top: 0; }
-  .import-preview-table td { padding: 6px 10px; border-top: 1px solid rgba(255,255,255,0.05); color: var(--text-dim); }
-  .import-preview-table tr:hover td { background: rgba(255,255,255,0.03); color: var(--text); }
-  .import-summary { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 12px; }
-  .import-summary b { color: var(--green); }
-  .import-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
-  .import-mode-row { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
-  .import-mode-btn {
-    flex: 1; min-width: 120px; padding: 8px 12px; border-radius: 8px; border: 1.5px solid var(--border);
-    background: var(--surface); color: var(--text-dim); cursor: pointer;
-    font-family: 'Poppins', sans-serif; font-size: 0.78rem; font-weight: 600;
-    text-align: center; transition: all 0.15s;
-  }
-  .import-mode-btn.active { border-color: var(--gold); background: rgba(255,215,0,0.1); color: var(--gold); }
-
-  @media (max-width: 480px) {
-    .link-cell .cell-text { max-width: 60px; }
-  }
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--purple-mid);border-radius:2px;}
+@media(max-width:480px){.link-cell .cell-text{max-width:60px;}}
 </style>
 </head>
 <body>
@@ -365,39 +306,57 @@
 <header>
   <div class="header-top">
     <div class="title-block">
-      <h1 id="sparshTitle">
-        <svg class="mic-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <linearGradient id="micGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#FFD700"/>
-              <stop offset="100%" stop-color="#7B5CF0"/>
-            </linearGradient>
-          </defs>
-          <rect x="9" y="2" width="6" height="11" rx="3" fill="url(#micGrad)"/>
-          <path d="M5 11a7 7 0 0 0 14 0" stroke="url(#micGrad)" stroke-width="2" stroke-linecap="round" fill="none"/>
-          <line x1="12" y1="18" x2="12" y2="22" stroke="url(#micGrad)" stroke-width="2" stroke-linecap="round"/>
-          <line x1="8" y1="22" x2="16" y2="22" stroke="url(#micGrad)" stroke-width="2" stroke-linecap="round"/>
-        </svg>
-        <span class="sparsh-text">Sparsh</span>
-      </h1>
-      <div class="show-date">🗓 June 13th, 2026</div>
+      <div class="title-row">
+        <h1 id="sparshTitle">
+          <svg class="mic-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <defs><linearGradient id="micGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#FFD700"/><stop offset="100%" stop-color="#7B5CF0"/>
+            </linearGradient></defs>
+            <rect x="9" y="2" width="6" height="11" rx="3" fill="url(#micGrad)"/>
+            <path d="M5 11a7 7 0 0 0 14 0" stroke="url(#micGrad)" stroke-width="2" stroke-linecap="round" fill="none"/>
+            <line x1="12" y1="18" x2="12" y2="22" stroke="url(#micGrad)" stroke-width="2" stroke-linecap="round"/>
+            <line x1="8" y1="22" x2="16" y2="22" stroke="url(#micGrad)" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          <span class="sparsh-text" id="programNameDisplay">Loading…</span>
+        </h1>
+        <button class="edit-title-btn" id="editTitleBtn" title="Edit program name &amp; date">✏️</button>
+        <span class="prog-status-pill active" id="progStatusPill">● Active</span>
+        <div class="active-switcher single" id="activeSwitcher">
+          <button class="active-switcher-btn" id="switcherBtn" title="Switch active show">
+            <span class="sw-name" id="switcherName">–</span>
+            <span class="sw-arrow">▾</span>
+          </button>
+          <div class="switcher-dropdown" id="switcherDropdown" style="display:none;"></div>
+        </div>
+      </div>
+      <div class="show-date" id="programDateDisplay"></div>
     </div>
     <div class="header-actions">
+      <button class="btn btn-icon btn-secondary" id="historyBtn" title="Program history">📋</button>
       <button class="btn btn-icon btn-secondary" id="offlineMgrBtn" title="Manage offline files" style="font-size:1rem;">📂</button>
       <button class="btn btn-icon btn-secondary" id="importBtn" title="Import from Excel">📤</button>
-      <button class="btn btn-icon btn-secondary" id="refreshBtn" title="Refresh from Supabase">🔄</button>
+      <button class="btn btn-icon btn-secondary" id="refreshBtn" title="Refresh">🔄</button>
       <button class="btn btn-icon btn-secondary" id="exportBtn" title="Export to Excel">📥</button>
     </div>
   </div>
 </header>
 
-<div class="toolbar">
+<!-- History banner shown when viewing a past program -->
+<div class="history-banner" id="historyBanner">
+  <span class="history-banner-text" id="historyBannerText">Viewing past program</span>
+  <button class="btn btn-secondary btn-sm" id="backToActiveBtn">↩ Back to Active Show</button>
+</div>
+
+<div class="toolbar" id="mainToolbar">
   <button class="btn btn-primary" id="addBtn">➕ Add Song</button>
+  <button class="btn btn-end btn-sm" id="endShowBtn">🎬 End Show</button>
+  <button class="btn btn-newshow btn-sm" id="newShowBtn">🎤 New Show</button>
   <div class="spacer"></div>
   <span id="status-msg">Connecting…</span>
 </div>
 
 <div id="addFormContainer" style="display:none;"></div>
+<div id="historyPanelContainer" style="display:none;"></div>
 <div id="offlinePanelContainer" style="display:none;"></div>
 
 <div class="table-wrap">
@@ -406,21 +365,13 @@
     <p style="color:var(--text-dim)">Loading setlist…</p>
   </div>
   <table id="songTable" style="display:none;">
-    <thead>
-      <tr>
-        <th></th>
-        <th>#</th>
-        <th>Song Name</th>
-        <th>Singer(s)</th>
-        <th>Karaoke</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
+    <thead><tr>
+      <th></th><th>#</th><th>Song Name</th><th>Singer(s)</th><th>Karaoke</th><th id="actionsHeader">Actions</th>
+    </tr></thead>
     <tbody id="songBody"></tbody>
   </table>
   <div id="emptyState" class="empty-state" style="display:none;">
-    <div class="icon">🎵</div>
-    <p>No songs yet. Add your first song!</p>
+    <div class="icon">🎵</div><p>No songs yet. Add your first song!</p>
   </div>
 </div>
 
@@ -439,12 +390,80 @@
   </div>
 </div>
 
-<!-- Hidden file input for loading local files -->
-<input type="file" id="fileInput" accept="audio/*,video/*" style="display:none;">
-<!-- Hidden file input for Excel import -->
-<input type="file" id="excelInput" accept=".xlsx,.xls,.csv" style="display:none;">
+<!-- Edit Title Modal -->
+<div id="editTitleModal" class="modal-overlay" style="display:none;">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-header">
+      <h2>✏️ Edit Program Details</h2>
+      <button class="modal-close" id="editTitleClose">✕</button>
+    </div>
+    <div class="modal-body" style="padding:20px;">
+      <div class="form-group" style="margin-bottom:14px;">
+        <label style="font-size:.72rem;color:var(--text-dim);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Program Name</label>
+        <input class="form-input" id="editNameInput" placeholder="e.g. Sparsh, Melodia, Swaranjali…" autocomplete="off">
+      </div>
+      <div class="form-group" style="margin-bottom:20px;">
+        <label style="font-size:.72rem;color:var(--text-dim);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Date</label>
+        <input class="form-input" id="editDateInput" placeholder="e.g. June 13th, 2026" autocomplete="off">
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-ghost" id="editTitleCancelBtn">Cancel</button>
+        <button class="btn btn-primary" id="editTitleSaveBtn">💾 Save</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-<!-- Import Preview Modal -->
+<!-- End Show Confirm Modal -->
+<div id="endShowModal" class="modal-overlay" style="display:none;">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <h2>🎬 End Show</h2>
+      <button class="modal-close" id="endShowClose">✕</button>
+    </div>
+    <div class="modal-body" style="padding:20px;">
+      <p style="color:var(--text-dim);font-size:.88rem;line-height:1.6;margin-bottom:20px;">
+        This will <b style="color:var(--rose)">lock</b> the current program and its setlist permanently. You can still view it in history, but no further edits will be possible.<br><br>
+        Ready to end <b style="color:var(--gold)" id="endShowName"></b>?
+      </p>
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn btn-ghost" id="endShowCancelBtn">Cancel</button>
+        <button class="btn btn-end" id="endShowConfirmBtn">🎬 Yes, End Show</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- New Show Modal -->
+<div id="newShowModal" class="modal-overlay" style="display:none;">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <h2>🎤 Start New Show</h2>
+      <button class="modal-close" id="newShowClose">✕</button>
+    </div>
+    <div class="modal-body" style="padding:20px;">
+      <div class="form-group" style="margin-bottom:14px;">
+        <label style="font-size:.72rem;color:var(--text-dim);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">New Program Name</label>
+        <input class="form-input" id="newShowName" placeholder="e.g. Melodia, Swaranjali…" autocomplete="off">
+      </div>
+      <div class="form-group" style="margin-bottom:16px;">
+        <label style="font-size:.72rem;color:var(--text-dim);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Date</label>
+        <input class="form-input" id="newShowDate" placeholder="e.g. December 25th, 2026" autocomplete="off">
+      </div>
+      <p style="font-size:.8rem;color:var(--text-dim);margin-bottom:10px;">Start with:</p>
+      <div class="import-mode-row" id="newShowModeRow">
+        <button class="import-mode-btn active" data-mode="copy">📋 Copy songs from last show</button>
+        <button class="import-mode-btn" data-mode="fresh">✨ Start fresh (empty list)</button>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
+        <button class="btn btn-ghost" id="newShowCancelBtn">Cancel</button>
+        <button class="btn btn-newshow" id="newShowConfirmBtn">🎤 Start New Show</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Import Modal -->
 <div id="importModal" class="modal-overlay" style="display:none;">
   <div class="modal" style="max-width:640px;">
     <div class="modal-header">
@@ -455,930 +474,902 @@
   </div>
 </div>
 
+<input type="file" id="fileInput" accept="audio/*,video/*" style="display:none;">
+<input type="file" id="excelInput" accept=".xlsx,.xls,.csv" style="display:none;">
 <div id="toast"></div>
 
 <script>
-// ── SUPABASE CONFIG ──
-const SUPABASE_URL = 'https://afnxggkjsxezrbhnntwl.supabase.co';
+// ═══════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════
+const SUPABASE_URL  = 'https://afnxggkjsxezrbhnntwl.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_YenvzolmYET7XAJF_4M9Ag_yJH2AdRG';
-const TABLE = 'songs';
+const SONGS_TABLE    = 'songs';
+const PROGRAMS_TABLE = 'programs';
 
 const COUSINS = ['Ravi','Soujanya','Soumya','Sravan','Saradhi','Harini','Ananya','Maanya'];
 
-let supabase_client;
-let songs = [];
-let editingCell = null;
-let dragSrc = null;
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let sb; // supabase client
+let songs        = [];
+let programs     = []; // all programs, sorted newest first
+let activeProgram = null;  // the one with status='active'
+let viewingProgram = null; // null = viewing active, else a past program object
+let editingCell  = null;
+let dragSrc      = null;
 
-// ════════════════════════════════════════════
-// 📦  INDEXEDDB — Offline file storage
-// ════════════════════════════════════════════
-const IDB_NAME = 'SparshKaraoke';
-const IDB_STORE = 'files';
-const IDB_VERSION = 1;
-let idb = null;
+// ═══════════════════════════════════════════════════════
+// INDEXEDDB (offline audio files)
+// ═══════════════════════════════════════════════════════
+const IDB_NAME='SparshKaraoke', IDB_STORE='files', IDB_VERSION=1;
+let idb=null, offlineFileMap={};
 
-function openIDB() {
-  return new Promise((resolve, reject) => {
-    const req = indexedDB.open(IDB_NAME, IDB_VERSION);
-    req.onupgradeneeded = (e) => {
-      const db = e.target.result;
-      if (!db.objectStoreNames.contains(IDB_STORE)) {
-        db.createObjectStore(IDB_STORE, { keyPath: 'id' });
-      }
-    };
-    req.onsuccess = (e) => { idb = e.target.result; resolve(idb); };
-    req.onerror = () => reject(req.error);
-  });
-}
+function openIDB(){return new Promise((res,rej)=>{
+  const r=indexedDB.open(IDB_NAME,IDB_VERSION);
+  r.onupgradeneeded=e=>{if(!e.target.result.objectStoreNames.contains(IDB_STORE))e.target.result.createObjectStore(IDB_STORE,{keyPath:'id'});};
+  r.onsuccess=e=>{idb=e.target.result;res(idb);};r.onerror=()=>rej(r.error);
+});}
+function idbSave(id,blob,fileName){return new Promise((res,rej)=>{
+  const tx=idb.transaction(IDB_STORE,'readwrite');
+  tx.objectStore(IDB_STORE).put({id,blob,fileName,savedAt:Date.now()});
+  tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});}
+function idbGet(id){return new Promise((res,rej)=>{
+  const r=idb.transaction(IDB_STORE,'readonly').objectStore(IDB_STORE).get(id);
+  r.onsuccess=()=>res(r.result||null);r.onerror=()=>rej(r.error);});}
+function idbDel(id){return new Promise((res,rej)=>{
+  const tx=idb.transaction(IDB_STORE,'readwrite');
+  tx.objectStore(IDB_STORE).delete(id);tx.oncomplete=res;tx.onerror=()=>rej(tx.error);});}
+function idbAll(){return new Promise((res,rej)=>{
+  const r=idb.transaction(IDB_STORE,'readonly').objectStore(IDB_STORE).getAll();
+  r.onsuccess=()=>res(r.result||[]);r.onerror=()=>rej(r.error);});}
+async function refreshOfflineMap(){const all=await idbAll();offlineFileMap={};all.forEach(r=>{offlineFileMap[r.id]={fileName:r.fileName,savedAt:r.savedAt};});}
 
-function idbSaveFile(songId, blob, fileName) {
-  return new Promise((resolve, reject) => {
-    const tx = idb.transaction(IDB_STORE, 'readwrite');
-    tx.objectStore(IDB_STORE).put({ id: songId, blob, fileName, savedAt: Date.now() });
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-}
-
-function idbGetFile(songId) {
-  return new Promise((resolve, reject) => {
-    const tx = idb.transaction(IDB_STORE, 'readonly');
-    const req = tx.objectStore(IDB_STORE).get(songId);
-    req.onsuccess = () => resolve(req.result || null);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-function idbDeleteFile(songId) {
-  return new Promise((resolve, reject) => {
-    const tx = idb.transaction(IDB_STORE, 'readwrite');
-    tx.objectStore(IDB_STORE).delete(songId);
-    tx.oncomplete = () => resolve();
-    tx.onerror = () => reject(tx.error);
-  });
-}
-
-function idbListAll() {
-  return new Promise((resolve, reject) => {
-    const tx = idb.transaction(IDB_STORE, 'readonly');
-    const req = tx.objectStore(IDB_STORE).getAll();
-    req.onsuccess = () => resolve(req.result || []);
-    req.onerror = () => reject(req.error);
-  });
-}
-
-// Track which songs have offline files (in memory after init)
-let offlineFileMap = {}; // songId -> { fileName, savedAt }
-
-async function refreshOfflineMap() {
-  const all = await idbListAll();
-  offlineFileMap = {};
-  all.forEach(r => { offlineFileMap[r.id] = { fileName: r.fileName, savedAt: r.savedAt }; });
-}
-
-// ── INIT ──
-(async () => {
-  try {
-    await openIDB();
-    await refreshOfflineMap();
-  } catch(e) {
-    console.warn('IndexedDB unavailable:', e);
-  }
-  try {
-    supabase_client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    fetchSongs();
-  } catch(e) {
-    setStatus('Config error', 'err');
-    showLoading(false);
-  }
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+(async()=>{
+  try{await openIDB();await refreshOfflineMap();}catch(e){console.warn('IDB:',e);}
+  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  await loadAll();
 })();
 
-// ── SUPABASE CRUD ──
-async function fetchSongs() {
-  showLoading(true); setStatus('Fetching…');
-  try {
-    const { data, error } = await supabase_client
-      .from(TABLE).select('*').order('position', { ascending: true });
-    if (error) throw error;
-    songs = data || [];
-    renderTable();
-    setStatus(`${songs.length} song${songs.length!==1?'s':''} loaded`, 'ok');
-  } catch(e) {
-    setStatus('Offline / error', 'err');
-    showToast('Could not reach server — showing cached data', 'info');
+async function loadAll(){
+  showLoading(true);setStatus('Loading…');
+  try{
+    // Load all programs
+    const{data:progs,error:pe}=await sb.from(PROGRAMS_TABLE).select('*').order('created_at',{ascending:false});
+    if(pe)throw pe;
+    programs=progs||[];
+    activeProgram=programs.find(p=>p.status==='active')||null;
+
+    if(!activeProgram){
+      // First time — create default program
+      activeProgram=await createProgram('Sparsh','June 13th, 2026');
+      programs=[activeProgram,...programs];
+    }
+
+    viewingProgram=null;
+    await loadSongsForProgram(activeProgram.id);
+    applyProgramUI(activeProgram,false);
+    updateSwitcher();
+    setStatus(`${songs.length} song${songs.length!==1?'s':''} loaded`,'ok');
+  }catch(e){
+    setStatus('Error: '+e.message,'err');
+    showToast('Could not load data','error');
   }
   showLoading(false);
 }
 
-async function insertSong(song) {
-  const pos = songs.length ? Math.max(...songs.map(s=>s.position||0)) + 1 : 1;
-  const { data, error } = await supabase_client.from(TABLE).insert([{
-    song_name: song.song_name, singers: song.singers,
-    karaoke_link: song.karaoke_link, position: pos
+// ═══════════════════════════════════════════════════════
+// PROGRAMS CRUD
+// ═══════════════════════════════════════════════════════
+async function createProgram(name,date){
+  const{data,error}=await sb.from(PROGRAMS_TABLE).insert([{
+    name,date,status:'active',created_at:new Date().toISOString()
   }]).select().single();
-  if (error) throw error;
+  if(error)throw error;
+  return data;
+}
+
+async function updateProgram(id,fields){
+  const{error}=await sb.from(PROGRAMS_TABLE).update(fields).eq('id',id);
+  if(error)throw error;
+  const idx=programs.findIndex(p=>p.id===id);
+  if(idx!==-1)programs[idx]={...programs[idx],...fields};
+  if(activeProgram&&activeProgram.id===id)activeProgram={...activeProgram,...fields};
+}
+
+// ═══════════════════════════════════════════════════════
+// SONGS CRUD
+// ═══════════════════════════════════════════════════════
+async function loadSongsForProgram(programId){
+  const{data,error}=await sb.from(SONGS_TABLE).select('*')
+    .eq('program_id',programId).order('position',{ascending:true});
+  if(error)throw error;
+  songs=data||[];
+  renderTable();
+}
+
+async function insertSong(song){
+  const pos=songs.length?Math.max(...songs.map(s=>s.position||0))+1:1;
+  const{data,error}=await sb.from(SONGS_TABLE).insert([{
+    song_name:song.song_name,singers:song.singers,
+    karaoke_link:song.karaoke_link,position:pos,
+    program_id:activeProgram.id
+  }]).select().single();
+  if(error)throw error;
   songs.push(data);
   songs.sort((a,b)=>(a.position||0)-(b.position||0));
   renderTable();
-  setStatus(`${songs.length} songs`, 'ok');
-  showToast('Song added! 🎵', 'success');
+  setStatus(`${songs.length} songs`,'ok');
+  showToast('Song added! 🎵','success');
 }
 
-async function updateSong(id, fields) {
-  const { error } = await supabase_client.from(TABLE).update(fields).eq('id', id);
-  if (error) { showToast('Save failed: ' + error.message, 'error'); return false; }
-  const idx = songs.findIndex(s=>s.id===id);
-  if (idx!==-1) songs[idx] = { ...songs[idx], ...fields };
+async function updateSong(id,fields){
+  const{error}=await sb.from(SONGS_TABLE).update(fields).eq('id',id);
+  if(error){showToast('Save failed: '+error.message,'error');return false;}
+  const idx=songs.findIndex(s=>s.id===id);
+  if(idx!==-1)songs[idx]={...songs[idx],...fields};
   return true;
 }
 
-async function deleteSong(id) {
-  const { error } = await supabase_client.from(TABLE).delete().eq('id', id);
-  if (error) { showToast('Delete failed: ' + error.message, 'error'); return; }
-  // Also remove offline file if any
-  try { await idbDeleteFile(id); delete offlineFileMap[id]; } catch(e) {}
-  songs = songs.filter(s=>s.id!==id);
+async function deleteSong(id){
+  const{error}=await sb.from(SONGS_TABLE).delete().eq('id',id);
+  if(error){showToast('Delete failed: '+error.message,'error');return;}
+  try{await idbDel(id);delete offlineFileMap[id];}catch(e){}
+  songs=songs.filter(s=>s.id!==id);
   renderTable();
-  setStatus(`${songs.length} songs`, 'ok');
-  showToast('Song removed', 'success');
+  setStatus(`${songs.length} songs`,'ok');
+  showToast('Song removed','success');
 }
 
-async function savePositions() {
-  for (const [i, s] of songs.entries()) {
-    await supabase_client.from(TABLE).update({ position: i+1 }).eq('id', s.id);
-    s.position = i+1;
+async function savePositions(){
+  for(const[i,s]of songs.entries()){
+    await sb.from(SONGS_TABLE).update({position:i+1}).eq('id',s.id);
+    s.position=i+1;
   }
 }
 
-// ════════════════════════════════════════════
-// 🎤  OFFLINE FILE LOADING
-// ════════════════════════════════════════════
-let pendingFileSongId = null;
+// ═══════════════════════════════════════════════════════
+// UI STATE — apply program to header
+// ═══════════════════════════════════════════════════════
+function applyProgramUI(prog,isHistory){
+  document.getElementById('programNameDisplay').textContent=prog.name||'(unnamed)';
+  document.getElementById('programDateDisplay').textContent=prog.date?'🗓 '+prog.date:'';
+  document.title=(prog.name||'Setlist')+(prog.date?' — '+prog.date:'');
 
-document.getElementById('fileInput').onchange = async (e) => {
-  const file = e.target.files[0];
-  if (!file || !pendingFileSongId) return;
-  e.target.value = ''; // reset so same file can be re-picked
+  const pill=document.getElementById('progStatusPill');
+  const editBtn=document.getElementById('editTitleBtn');
+  const toolbar=document.getElementById('mainToolbar');
+  const endBtn=document.getElementById('endShowBtn');
+  const newShowBtn=document.getElementById('newShowBtn');
+  const addBtn=document.getElementById('addBtn');
+  const actionsHdr=document.getElementById('actionsHeader');
 
-  showToast('Saving file to device…', 'info');
-  try {
-    await idbSaveFile(pendingFileSongId, file, file.name);
-    offlineFileMap[pendingFileSongId] = { fileName: file.name, savedAt: Date.now() };
-    renderTable();
-    showToast(`✅ "${file.name}" saved for offline play!`, 'success');
-  } catch(err) {
-    showToast('Failed to save: ' + err.message, 'error');
+  if(isHistory){
+    // Read-only history view
+    pill.textContent='👁 Viewing History';
+    pill.className='prog-status-pill history';
+    editBtn.style.display='none';
+    endBtn.style.display='none';
+    newShowBtn.style.display='none';
+    addBtn.style.display='none';
+    actionsHdr.style.display='none';
+    document.getElementById('historyBanner').classList.add('show');
+    document.getElementById('historyBannerText').innerHTML=
+      `👁 Viewing past program: <b>${prog.name}${prog.date?' · '+prog.date:''}</b> (read-only)`;
+    document.body.classList.add('viewing-history');
+  } else {
+    document.body.classList.remove('viewing-history');
+    document.getElementById('historyBanner').classList.remove('show');
+    actionsHdr.style.display='';
+    addBtn.style.display='';
+    editBtn.style.display='';
+    if(prog.status==='active'){
+      pill.textContent='● Active';
+      pill.className='prog-status-pill active';
+      endBtn.style.display='';
+      newShowBtn.style.display='';
+    } else {
+      // ended but it's the one we're managing (shouldn't normally happen)
+      pill.textContent='🔒 Ended';
+      pill.className='prog-status-pill ended';
+      endBtn.style.display='none';
+      newShowBtn.style.display='';
+    }
   }
-  pendingFileSongId = null;
-};
-
-function triggerFileLoad(songId) {
-  pendingFileSongId = songId;
-  document.getElementById('fileInput').click();
 }
 
-async function removeOfflineFile(songId) {
-  await idbDeleteFile(songId);
-  delete offlineFileMap[songId];
-  renderTable();
-  showToast('Offline file removed', 'success');
-}
+// ═══════════════════════════════════════════════════════
+// RENDER TABLE
+// ═══════════════════════════════════════════════════════
+function renderTable(){
+  const tbody=document.getElementById('songBody');
+  const table=document.getElementById('songTable');
+  const empty=document.getElementById('emptyState');
+  tbody.innerHTML='';
+  const isReadOnly=!!viewingProgram;
 
-// ── RENDER ──
-function renderTable() {
-  const tbody = document.getElementById('songBody');
-  const table = document.getElementById('songTable');
-  const empty = document.getElementById('emptyState');
-  tbody.innerHTML = '';
-  if (!songs.length) { table.style.display='none'; empty.style.display='block'; return; }
-  table.style.display='table'; empty.style.display='none';
+  if(!songs.length){table.style.display='none';empty.style.display='block';return;}
+  table.style.display='table';empty.style.display='none';
 
-  songs.forEach((song, idx) => {
-    const tr = document.createElement('tr');
-    tr.dataset.id = song.id;
-    tr.draggable = true;
+  songs.forEach((song,idx)=>{
+    const tr=document.createElement('tr');
+    tr.dataset.id=song.id;
+    if(!isReadOnly)tr.draggable=true;
 
     // Drag handle
-    const tdDrag = document.createElement('td');
-    tdDrag.className = 'drag-handle'; tdDrag.textContent = '⠿';
-    tr.appendChild(tdDrag);
-
+    const tdD=document.createElement('td');tdD.className='drag-handle';tdD.textContent='⠿';tr.appendChild(tdD);
     // Number
-    const tdNum = document.createElement('td');
-    tdNum.className = 'row-num'; tdNum.textContent = idx + 1;
-    tr.appendChild(tdNum);
-
+    const tdN=document.createElement('td');tdN.className='row-num';tdN.textContent=idx+1;tr.appendChild(tdN);
     // Song name
-    const tdName = document.createElement('td');
-    tdName.appendChild(makeEditableCell(song, 'song_name', song.song_name || '—'));
-    tr.appendChild(tdName);
-
+    const tdS=document.createElement('td');
+    if(isReadOnly){const s=document.createElement('span');s.textContent=song.song_name||'—';tdS.appendChild(s);}
+    else tdS.appendChild(makeEditableCell(song,'song_name',song.song_name||'—'));
+    tr.appendChild(tdS);
     // Singers
-    const tdSingers = document.createElement('td');
-    tdSingers.appendChild(makeSingersCell(song));
-    tr.appendChild(tdSingers);
-
-    // Karaoke cell (online link + offline load + play buttons)
-    const tdLink = document.createElement('td');
-    tdLink.appendChild(makeLinkCell(song));
-    tr.appendChild(tdLink);
-
+    const tdSi=document.createElement('td');
+    if(isReadOnly){
+      const div=document.createElement('div');div.className='singers-display';
+      (song.singers||[]).forEach(name=>{const c=document.createElement('span');c.className='singer-chip';c.textContent=name;div.appendChild(c);});
+      if(!song.singers||!song.singers.length){const c=document.createElement('span');c.className='singer-chip empty';c.textContent='—';div.appendChild(c);}
+      tdSi.appendChild(div);
+    } else tdSi.appendChild(makeSingersCell(song));
+    tr.appendChild(tdSi);
+    // Karaoke
+    const tdL=document.createElement('td');tdL.appendChild(makeLinkCell(song,isReadOnly));tr.appendChild(tdL);
     // Actions
-    const tdAct = document.createElement('td');
-    const actDiv = document.createElement('div');
-    actDiv.className = 'row-actions';
-    const delBtn = document.createElement('button');
-    delBtn.className = 'btn btn-danger btn-sm';
-    delBtn.innerHTML = '🗑'; delBtn.title = 'Delete song';
-    delBtn.onclick = () => { if(confirm(`Delete "${song.song_name}"?`)) deleteSong(song.id); };
-    actDiv.appendChild(delBtn);
-    tdAct.appendChild(actDiv);
-    tr.appendChild(tdAct);
+    const tdA=document.createElement('td');
+    if(!isReadOnly){
+      const div=document.createElement('div');div.className='row-actions';
+      const del=document.createElement('button');del.className='btn btn-danger btn-sm';del.innerHTML='🗑';
+      del.onclick=()=>{if(confirm(`Delete "${song.song_name}"?`))deleteSong(song.id);};
+      div.appendChild(del);tdA.appendChild(div);
+    }
+    tr.appendChild(tdA);
 
-    tr.addEventListener('dragstart', onDragStart);
-    tr.addEventListener('dragover', onDragOver);
-    tr.addEventListener('drop', onDrop);
-    tr.addEventListener('dragend', onDragEnd);
-    setupTouchDrag(tr);
+    if(!isReadOnly){
+      tr.addEventListener('dragstart',onDragStart);tr.addEventListener('dragover',onDragOver);
+      tr.addEventListener('drop',onDrop);tr.addEventListener('dragend',onDragEnd);
+      setupTouchDrag(tr);
+    }
     tbody.appendChild(tr);
   });
 }
 
-function makeEditableCell(song, field, displayText) {
-  const span = document.createElement('span');
-  span.className = 'cell-text';
-  span.textContent = displayText;
-  span.title = 'Tap to edit';
-  span.onclick = () => startInlineEdit(song, field, span);
-  return span;
+// ── Editable cell ──
+function makeEditableCell(song,field,displayText){
+  const span=document.createElement('span');span.className='cell-text';span.textContent=displayText;
+  span.title='Tap to edit';span.onclick=()=>startInlineEdit(song,field,span);return span;
+}
+function startInlineEdit(song,field,span){
+  if(viewingProgram)return;
+  if(editingCell)finishEdit(false);
+  const input=document.createElement('input');input.className='cell-input';input.value=song[field]||'';
+  input.placeholder=field==='karaoke_link'?'Google Drive / YouTube link':'Song name';
+  span.parentNode.replaceChild(input,span);input.focus();
+  editingCell={song,field,input,span};
+  input.onblur=()=>finishEdit(true);
+  input.onkeydown=e=>{if(e.key==='Enter')finishEdit(true);if(e.key==='Escape')finishEdit(false);};
+}
+async function finishEdit(save){
+  if(!editingCell)return;
+  const{song,field,input,span}=editingCell;editingCell=null;
+  const newVal=input.value.trim();
+  if(save&&newVal!==(song[field]||'')){
+    span.textContent=newVal||'—';input.parentNode.replaceChild(span,input);
+    await updateSong(song.id,{[field]:newVal});
+    if(field==='karaoke_link')renderTable();
+  } else {span.textContent=song[field]||'—';input.parentNode.replaceChild(span,input);}
 }
 
-function startInlineEdit(song, field, span) {
-  if (editingCell) finishEdit(false);
-  const input = document.createElement('input');
-  input.className = 'cell-input';
-  input.value = song[field] || '';
-  input.placeholder = field === 'karaoke_link' ? 'Google Drive / YouTube link' : 'Song name';
-  span.parentNode.replaceChild(input, span);
-  input.focus();
-  editingCell = { song, field, input, span };
-  input.onblur = () => finishEdit(true);
-  input.onkeydown = (e) => { if(e.key==='Enter') finishEdit(true); if(e.key==='Escape') finishEdit(false); };
+// ── Singers cell ──
+function makeSingersCell(song){
+  const singers=song.singers||[];
+  const div=document.createElement('div');div.className='singers-display';div.title='Tap to change singers';
+  if(!singers.length){const c=document.createElement('span');c.className='singer-chip empty';c.textContent='Tap to assign';div.appendChild(c);}
+  else singers.forEach(name=>{const c=document.createElement('span');c.className='singer-chip';c.textContent=name;div.appendChild(c);});
+  div.onclick=e=>showSingersPopup(song,div,e);return div;
 }
 
-async function finishEdit(save) {
-  if (!editingCell) return;
-  const { song, field, input, span } = editingCell;
-  editingCell = null;
-  const newVal = input.value.trim();
-  if (save && newVal !== (song[field] || '')) {
-    span.textContent = newVal || '—';
-    input.parentNode.replaceChild(span, input);
-    await updateSong(song.id, { [field]: newVal });
-    if (field === 'karaoke_link') renderTable();
-  } else {
-    span.textContent = song[field] || '—';
-    input.parentNode.replaceChild(span, input);
-  }
-}
+// ── Link cell ──
+function makeLinkCell(song,readOnly=false){
+  const div=document.createElement('div');div.className='link-cell';
+  const link=song.karaoke_link||'';
+  const hasOffline=!!offlineFileMap[song.id];
 
-function makeSingersCell(song) {
-  const singers = song.singers || [];
-  const div = document.createElement('div');
-  div.className = 'singers-display';
-  div.title = 'Tap to change singers';
-  if (!singers.length) {
-    const chip = document.createElement('span');
-    chip.className = 'singer-chip empty'; chip.textContent = 'Tap to assign';
-    div.appendChild(chip);
-  } else {
-    singers.forEach(name => {
-      const chip = document.createElement('span');
-      chip.className = 'singer-chip'; chip.textContent = name;
-      div.appendChild(chip);
-    });
-  }
-  div.onclick = (e) => showSingersPopup(song, div, e);
-  return div;
-}
-
-function makeLinkCell(song) {
-  const div = document.createElement('div');
-  div.className = 'link-cell';
-  const link = song.karaoke_link || '';
-  const hasOffline = !!offlineFileMap[song.id];
-  const offlineInfo = offlineFileMap[song.id];
-
-  // ── Online link text (editable) ──
-  const span = document.createElement('span');
-  span.className = 'cell-text';
-  span.textContent = link ? '🔗' : '—';
-  span.title = link ? ('Online: ' + link) : 'Tap to add link';
-  span.onclick = () => startInlineEdit(song, 'karaoke_link', span);
+  const span=document.createElement('span');span.className='cell-text';
+  span.textContent=link?'🔗':'—';span.title=link?'Online: '+link:'Tap to add link';
+  if(!readOnly)span.onclick=()=>startInlineEdit(song,'karaoke_link',span);
   div.appendChild(span);
 
-  // ── Online play button ──
-  const playOnline = document.createElement('button');
-  playOnline.className = 'play-btn';
-  playOnline.title = 'Play via online link';
-  playOnline.innerHTML = '▶';
-  if (!link) playOnline.disabled = true;
-  playOnline.onclick = (e) => { e.stopPropagation(); openKaraokeModal(song, 'online'); };
-  div.appendChild(playOnline);
+  const pb=document.createElement('button');pb.className='play-btn';pb.innerHTML='▶';pb.title='Play online';
+  if(!link)pb.disabled=true;
+  pb.onclick=e=>{e.stopPropagation();openKaraokeModal(song,'online');};div.appendChild(pb);
 
-  // ── Offline section ──
-  if (hasOffline) {
-    // Offline play button (green)
-    const playOffline = document.createElement('button');
-    playOffline.className = 'play-btn-offline';
-    playOffline.title = `Play offline: ${offlineInfo.fileName}`;
-    playOffline.innerHTML = '▶';
-    playOffline.onclick = (e) => { e.stopPropagation(); openKaraokeModal(song, 'offline'); };
-    div.appendChild(playOffline);
-
-    // Badge showing it's saved
-    const badge = document.createElement('span');
-    badge.className = 'offline-badge';
-    badge.title = `Saved: ${offlineInfo.fileName}`;
-    badge.textContent = '📥 Saved';
-    div.appendChild(badge);
-  } else {
-    // Load file button
-    const loadBtn = document.createElement('button');
-    loadBtn.className = 'btn-offline';
-    loadBtn.title = 'Load local file for offline play';
-    loadBtn.innerHTML = '📁 Load';
-    loadBtn.onclick = (e) => { e.stopPropagation(); triggerFileLoad(song.id); };
-    div.appendChild(loadBtn);
+  if(hasOffline){
+    const po=document.createElement('button');po.className='play-btn-offline';po.innerHTML='▶';
+    po.title=`Play offline: ${offlineFileMap[song.id].fileName}`;
+    po.onclick=e=>{e.stopPropagation();openKaraokeModal(song,'offline');};div.appendChild(po);
+    const badge=document.createElement('span');badge.className='offline-badge';badge.textContent='📥 Saved';div.appendChild(badge);
+  } else if(!readOnly){
+    const lb=document.createElement('button');lb.className='btn-offline';lb.innerHTML='📁 Load';
+    lb.onclick=e=>{e.stopPropagation();pendingFileSongId=song.id;document.getElementById('fileInput').click();};
+    div.appendChild(lb);
   }
-
   return div;
 }
 
-// ── SINGERS POPUP ──
-function showSingersPopup(song, anchor, e) {
+// ═══════════════════════════════════════════════════════
+// SINGERS POPUP
+// ═══════════════════════════════════════════════════════
+function showSingersPopup(song,anchor,e){
+  if(viewingProgram)return;
   e.stopPropagation();
-  const popup = document.getElementById('singersPopup');
-  const selected = Array.isArray(song.singers) ? [...song.singers] : [];
-  popup.innerHTML = '';
-  const h4 = document.createElement('h4'); h4.textContent = 'Select Singer(s)'; popup.appendChild(h4);
-  COUSINS.forEach(name => {
-    const div = document.createElement('div'); div.className = 'singer-option';
-    const cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = 'sp_'+name; cb.checked = selected.includes(name);
-    cb.onchange = () => { if(cb.checked){if(!selected.includes(name))selected.push(name);}else{const i=selected.indexOf(name);if(i>-1)selected.splice(i,1);} };
-    const lbl = document.createElement('label'); lbl.htmlFor='sp_'+name; lbl.textContent=name; lbl.style.cssText='cursor:pointer;flex:1';
-    div.appendChild(cb); div.appendChild(lbl);
-    div.onclick = () => { cb.checked=!cb.checked; cb.dispatchEvent(new Event('change')); };
+  const popup=document.getElementById('singersPopup');
+  const selected=Array.isArray(song.singers)?[...song.singers]:[];
+  popup.innerHTML='';
+  const h4=document.createElement('h4');h4.textContent='Select Singer(s)';popup.appendChild(h4);
+  COUSINS.forEach(name=>{
+    const div=document.createElement('div');div.className='singer-option';
+    const cb=document.createElement('input');cb.type='checkbox';cb.id='sp_'+name;cb.checked=selected.includes(name);
+    cb.onchange=()=>{if(cb.checked){if(!selected.includes(name))selected.push(name);}else{const i=selected.indexOf(name);if(i>-1)selected.splice(i,1);}};
+    const lbl=document.createElement('label');lbl.htmlFor='sp_'+name;lbl.textContent=name;lbl.style.cssText='cursor:pointer;flex:1';
+    div.appendChild(cb);div.appendChild(lbl);div.onclick=()=>{cb.checked=!cb.checked;cb.dispatchEvent(new Event('change'));};
     popup.appendChild(div);
   });
-  const footer = document.createElement('div'); footer.className = 'singers-popup-footer';
-  const cancelBtn = document.createElement('button'); cancelBtn.className='btn btn-ghost btn-sm'; cancelBtn.textContent='Cancel'; cancelBtn.onclick=()=>{popup.style.display='none';};
-  const saveBtn = document.createElement('button'); saveBtn.className='btn btn-primary btn-sm'; saveBtn.textContent='Done';
-  saveBtn.onclick = async () => { popup.style.display='none'; await updateSong(song.id,{singers:selected}); song.singers=selected; renderTable(); };
-  footer.appendChild(cancelBtn); footer.appendChild(saveBtn); popup.appendChild(footer);
-  const rect = anchor.getBoundingClientRect();
-  popup.style.display = 'block';
-  const popH = popup.offsetHeight || 320;
-  let top = rect.bottom + 6;
-  if (top + popH > window.innerHeight - 10) top = rect.top - popH - 6;
-  popup.style.top = Math.max(10, top) + 'px';
-  let left = rect.left;
-  if (left + 280 > window.innerWidth - 10) left = window.innerWidth - 290;
-  popup.style.left = Math.max(10, left) + 'px';
+  const footer=document.createElement('div');footer.className='singers-popup-footer';
+  const cancelBtn=document.createElement('button');cancelBtn.className='btn btn-ghost btn-sm';cancelBtn.textContent='Cancel';cancelBtn.onclick=()=>popup.style.display='none';
+  const saveBtn=document.createElement('button');saveBtn.className='btn btn-primary btn-sm';saveBtn.textContent='Done';
+  saveBtn.onclick=async()=>{popup.style.display='none';await updateSong(song.id,{singers:selected});song.singers=selected;renderTable();};
+  footer.appendChild(cancelBtn);footer.appendChild(saveBtn);popup.appendChild(footer);
+  const rect=anchor.getBoundingClientRect();popup.style.display='block';
+  const popH=popup.offsetHeight||320;
+  let top=rect.bottom+6;if(top+popH>window.innerHeight-10)top=rect.top-popH-6;
+  popup.style.top=Math.max(10,top)+'px';
+  let left=rect.left;if(left+280>window.innerWidth-10)left=window.innerWidth-290;
+  popup.style.left=Math.max(10,left)+'px';
 }
-document.addEventListener('click', (e) => {
-  const popup = document.getElementById('singersPopup');
-  if (!popup.contains(e.target)) popup.style.display = 'none';
-});
+document.addEventListener('click',e=>{const p=document.getElementById('singersPopup');if(!p.contains(e.target))p.style.display='none';});
 
-// ════════════════════════════════════════════
-// 🎬  KARAOKE MODAL — online + offline
-// ════════════════════════════════════════════
-async function openKaraokeModal(song, mode) {
-  const body = document.getElementById('modalBody');
-  const titleEl = document.getElementById('modalTitle');
-  const badge = document.getElementById('modalSourceBadge');
-  body.innerHTML = '';
-  titleEl.textContent = '🎶 ' + (song.song_name || 'Karaoke');
-
-  if (mode === 'offline') {
-    badge.textContent = '📥 Offline'; badge.className = 'modal-source-badge offline';
-    document.getElementById('karaokeModal').style.display = 'flex';
-
-    const rec = await idbGetFile(song.id);
-    if (!rec) { showToast('File not found — try reloading it', 'error'); closeModal(); return; }
-
-    const url = URL.createObjectURL(rec.blob);
-    const wrap = document.createElement('div'); wrap.className = 'video-wrap';
-    const isVideo = rec.blob.type.startsWith('video/');
-    if (isVideo) {
-      const vid = document.createElement('video');
-      vid.src = url; vid.controls = true; vid.autoplay = true;
-      vid.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;background:#000;';
-      vid.onended = () => URL.revokeObjectURL(url);
-      wrap.appendChild(vid);
-    } else {
-      // Audio file — show styled audio player
-      wrap.style.cssText = 'position:relative;padding-top:0;height:80px;border-radius:10px;background:linear-gradient(135deg,#1A1040,#231550);display:flex;align-items:center;justify-content:center;padding:0 16px;';
-      const aud = document.createElement('audio');
-      aud.src = url; aud.controls = true; aud.autoplay = true;
-      aud.style.cssText = 'width:100%;accent-color:#FFD700;';
-      aud.onended = () => URL.revokeObjectURL(url);
-      wrap.appendChild(aud);
-    }
-    // File info
-    const info = document.createElement('p');
-    info.style.cssText = 'margin-top:10px;font-size:0.72rem;color:var(--text-dim);text-align:center;';
-    const d = new Date(rec.savedAt);
-    info.textContent = `📁 ${rec.fileName} · Saved ${d.toLocaleDateString()}`;
-    body.appendChild(wrap);
-    body.appendChild(info);
-
+// ═══════════════════════════════════════════════════════
+// KARAOKE MODAL
+// ═══════════════════════════════════════════════════════
+async function openKaraokeModal(song,mode){
+  const body=document.getElementById('modalBody');
+  document.getElementById('modalTitle').textContent='🎶 '+(song.song_name||'Karaoke');
+  const badge=document.getElementById('modalSourceBadge');
+  body.innerHTML='';
+  if(mode==='offline'){
+    badge.textContent='📥 Offline';badge.className='modal-source-badge offline';
+    document.getElementById('karaokeModal').style.display='flex';
+    const rec=await idbGet(song.id);
+    if(!rec){showToast('File not found — reload it','error');closeModal();return;}
+    const url=URL.createObjectURL(rec.blob);
+    const wrap=document.createElement('div');wrap.className='video-wrap';
+    const isVideo=rec.blob.type.startsWith('video/');
+    if(isVideo){const v=document.createElement('video');v.src=url;v.controls=true;v.autoplay=true;v.style='position:absolute;inset:0;width:100%;height:100%;background:#000;';v.onended=()=>URL.revokeObjectURL(url);wrap.appendChild(v);}
+    else{wrap.style.cssText='position:relative;padding-top:0;height:80px;border-radius:10px;background:linear-gradient(135deg,#1A1040,#231550);display:flex;align-items:center;justify-content:center;padding:0 16px;';const a=document.createElement('audio');a.src=url;a.controls=true;a.autoplay=true;a.style='width:100%;accent-color:#FFD700;';a.onended=()=>URL.revokeObjectURL(url);wrap.appendChild(a);}
+    const info=document.createElement('p');info.style='margin-top:10px;font-size:.72rem;color:var(--text-dim);text-align:center;';
+    info.textContent=`📁 ${rec.fileName} · Saved ${new Date(rec.savedAt).toLocaleDateString()}`;
+    body.appendChild(wrap);body.appendChild(info);
   } else {
-    // Online mode
-    badge.textContent = '🌐 Online'; badge.className = 'modal-source-badge online';
-    document.getElementById('karaokeModal').style.display = 'flex';
-
-    const link = song.karaoke_link || '';
-    const embedUrl = getEmbedUrl(link);
-    if (embedUrl) {
-      const wrap = document.createElement('div'); wrap.className = 'video-wrap';
-      const iframe = document.createElement('iframe');
-      iframe.src = embedUrl; iframe.allow = 'autoplay; encrypted-media'; iframe.allowFullscreen = true; iframe.frameBorder = '0';
-      wrap.appendChild(iframe); body.appendChild(wrap);
-    } else if (link) {
-      const msg = document.createElement('div'); msg.className = 'video-link-msg';
-      msg.innerHTML = `<p style="margin-bottom:14px">Can't embed this link directly. Open in browser:</p><a href="${link}" target="_blank" rel="noopener">${link}</a>`;
-      body.appendChild(msg);
-    }
+    badge.textContent='🌐 Online';badge.className='modal-source-badge online';
+    document.getElementById('karaokeModal').style.display='flex';
+    const link=song.karaoke_link||'';
+    const embed=getEmbedUrl(link);
+    if(embed){const wrap=document.createElement('div');wrap.className='video-wrap';const iframe=document.createElement('iframe');iframe.src=embed;iframe.allow='autoplay; encrypted-media';iframe.allowFullscreen=true;iframe.frameBorder='0';wrap.appendChild(iframe);body.appendChild(wrap);}
+    else if(link){const msg=document.createElement('div');msg.className='video-link-msg';msg.innerHTML=`<p style="margin-bottom:14px">Can't embed directly. Open in browser:</p><a href="${link}" target="_blank" rel="noopener">${link}</a>`;body.appendChild(msg);}
   }
 }
-
-function getEmbedUrl(link) {
-  if (!link) return null;
-  const ytMatch = link.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
-  if (ytMatch) return `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1`;
-  const gdMatch = link.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([a-zA-Z0-9_-]+)/);
-  if (gdMatch) return `https://drive.google.com/file/d/${gdMatch[1]}/preview`;
-  const gdShare = link.match(/drive\.google\.com\/.*[?&]id=([a-zA-Z0-9_-]+)/);
-  if (gdShare) return `https://drive.google.com/file/d/${gdShare[1]}/preview`;
+function getEmbedUrl(link){
+  if(!link)return null;
+  const yt=link.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);if(yt)return`https://www.youtube.com/embed/${yt[1]}?autoplay=1`;
+  const gd=link.match(/drive\.google\.com\/(?:file\/d\/|open\?id=)([a-zA-Z0-9_-]+)/);if(gd)return`https://drive.google.com/file/d/${gd[1]}/preview`;
+  const gds=link.match(/drive\.google\.com\/.*[?&]id=([a-zA-Z0-9_-]+)/);if(gds)return`https://drive.google.com/file/d/${gds[1]}/preview`;
   return null;
 }
+function closeModal(){document.getElementById('karaokeModal').style.display='none';document.getElementById('modalBody').innerHTML='';}
+document.getElementById('modalClose').onclick=closeModal;
+document.getElementById('karaokeModal').addEventListener('click',e=>{if(e.target===e.currentTarget)closeModal();});
 
-function closeModal() {
-  document.getElementById('karaokeModal').style.display = 'none';
-  document.getElementById('modalBody').innerHTML = '';
+// ═══════════════════════════════════════════════════════
+// EDIT PROGRAM NAME/DATE (active only)
+// ═══════════════════════════════════════════════════════
+document.getElementById('editTitleBtn').onclick=()=>{
+  if(!activeProgram||viewingProgram)return;
+  document.getElementById('editNameInput').value=activeProgram.name||'';
+  document.getElementById('editDateInput').value=activeProgram.date||'';
+  document.getElementById('editTitleModal').style.display='flex';
+  setTimeout(()=>document.getElementById('editNameInput').focus(),50);
+};
+document.getElementById('editTitleClose').onclick=()=>document.getElementById('editTitleModal').style.display='none';
+document.getElementById('editTitleCancelBtn').onclick=()=>document.getElementById('editTitleModal').style.display='none';
+document.getElementById('editTitleModal').addEventListener('click',e=>{if(e.target===e.currentTarget)document.getElementById('editTitleModal').style.display='none';});
+document.getElementById('editTitleSaveBtn').onclick=async()=>{
+  const name=document.getElementById('editNameInput').value.trim();
+  const date=document.getElementById('editDateInput').value.trim();
+  if(!name){showToast('Program name cannot be empty','error');return;}
+  const btn=document.getElementById('editTitleSaveBtn');btn.disabled=true;btn.textContent='Saving…';
+  try{
+    await updateProgram(activeProgram.id,{name,date});
+    applyProgramUI(activeProgram,false);
+    updateSwitcher();
+    document.getElementById('editTitleModal').style.display='none';
+    showToast('Program details updated for everyone ✨','success');
+  }catch(e){showToast('Save failed: '+e.message,'error');}
+  btn.disabled=false;btn.textContent='💾 Save';
+};
+
+// ═══════════════════════════════════════════════════════
+// END SHOW
+// ═══════════════════════════════════════════════════════
+document.getElementById('newShowBtn').onclick=()=>openNewShowModal();
+document.getElementById('endShowBtn').onclick=()=>{
+  if(!activeProgram)return;
+  document.getElementById('endShowName').textContent=activeProgram.name+(activeProgram.date?' ('+activeProgram.date+')':'');
+  document.getElementById('endShowModal').style.display='flex';
+};
+document.getElementById('endShowClose').onclick=()=>document.getElementById('endShowModal').style.display='none';
+document.getElementById('endShowCancelBtn').onclick=()=>document.getElementById('endShowModal').style.display='none';
+document.getElementById('endShowModal').addEventListener('click',e=>{if(e.target===e.currentTarget)document.getElementById('endShowModal').style.display='none';});
+document.getElementById('endShowConfirmBtn').onclick=async()=>{
+  const btn=document.getElementById('endShowConfirmBtn');btn.disabled=true;btn.textContent='Ending…';
+  try{
+    await updateProgram(activeProgram.id,{status:'ended',ended_at:new Date().toISOString()});
+    document.getElementById('endShowModal').style.display='none';
+    showToast(`🎬 "${activeProgram.name}" has ended. Time for a new show!`,'success');
+    // Show New Show modal automatically
+    setTimeout(()=>openNewShowModal(),800);
+  }catch(e){showToast('Error: '+e.message,'error');}
+  btn.disabled=false;btn.textContent='🎬 Yes, End Show';
+};
+
+// ═══════════════════════════════════════════════════════
+// NEW SHOW
+// ═══════════════════════════════════════════════════════
+let newShowMode='copy';
+function openNewShowModal(){
+  document.getElementById('newShowName').value='';
+  document.getElementById('newShowDate').value='';
+  newShowMode='copy';
+  document.querySelectorAll('#newShowModeRow .import-mode-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.mode==='copy');
+  });
+  document.getElementById('newShowModal').style.display='flex';
+  setTimeout(()=>document.getElementById('newShowName').focus(),50);
 }
-document.getElementById('modalClose').onclick = closeModal;
-document.getElementById('karaokeModal').addEventListener('click', (e) => { if(e.target===e.currentTarget) closeModal(); });
+document.getElementById('newShowClose').onclick=()=>document.getElementById('newShowModal').style.display='none';
+document.getElementById('newShowCancelBtn').onclick=()=>document.getElementById('newShowModal').style.display='none';
+document.getElementById('newShowModal').addEventListener('click',e=>{if(e.target===e.currentTarget)document.getElementById('newShowModal').style.display='none';});
+document.querySelectorAll('#newShowModeRow .import-mode-btn').forEach(b=>{
+  b.onclick=()=>{newShowMode=b.dataset.mode;document.querySelectorAll('#newShowModeRow .import-mode-btn').forEach(x=>x.classList.toggle('active',x===b));};
+});
+document.getElementById('newShowConfirmBtn').onclick=async()=>{
+  const name=document.getElementById('newShowName').value.trim();
+  const date=document.getElementById('newShowDate').value.trim();
+  if(!name){showToast('Please enter a program name','error');return;}
+  const btn=document.getElementById('newShowConfirmBtn');btn.disabled=true;btn.textContent='Creating…';
+  try{
+    const newProg=await createProgram(name,date);
+    programs.unshift(newProg);
 
-// ════════════════════════════════════════════
-// 📂  OFFLINE FILE MANAGER PANEL
-// ════════════════════════════════════════════
-let offlinePanelOpen = false;
-document.getElementById('offlineMgrBtn').onclick = toggleOfflinePanel;
-
-async function toggleOfflinePanel() {
-  const container = document.getElementById('offlinePanelContainer');
-  if (offlinePanelOpen) { container.style.display='none'; container.innerHTML=''; offlinePanelOpen=false; return; }
-  offlinePanelOpen = true;
-  await refreshOfflineMap();
-  renderOfflinePanel();
-  container.style.display = 'block';
-}
-
-function renderOfflinePanel() {
-  const container = document.getElementById('offlinePanelContainer');
-  container.innerHTML = '';
-  const panel = document.createElement('div'); panel.className = 'offline-panel';
-
-  const h3 = document.createElement('h3');
-  h3.innerHTML = '📂 Offline File Manager';
-  panel.appendChild(h3);
-
-  const desc = document.createElement('p');
-  desc.textContent = 'Load audio/video files from your device for each song. Once saved, tap the green ▶ button on any row to play offline — even without internet on stage.';
-  panel.appendChild(desc);
-
-  const list = document.createElement('div'); list.className = 'offline-list';
-
-  songs.forEach(song => {
-    const item = document.createElement('div'); item.className = 'offline-item';
-    const nameEl = document.createElement('span'); nameEl.className = 'song-name'; nameEl.textContent = song.song_name || '(unnamed)';
-    item.appendChild(nameEl);
-
-    const info = offlineFileMap[song.id];
-    if (info) {
-      const statusEl = document.createElement('span'); statusEl.className = 'file-status saved';
-      statusEl.textContent = `✅ ${info.fileName}`;
-      item.appendChild(statusEl);
-      const removeBtn = document.createElement('button');
-      removeBtn.className = 'btn btn-danger btn-sm'; removeBtn.textContent = '🗑';
-      removeBtn.title = 'Remove offline file';
-      removeBtn.onclick = async () => { await removeOfflineFile(song.id); renderOfflinePanel(); };
-      item.appendChild(removeBtn);
-      const replaceBtn = document.createElement('button');
-      replaceBtn.className = 'btn-offline'; replaceBtn.innerHTML = '🔄 Replace';
-      replaceBtn.onclick = () => { offlinePanelOpen=false; container.style.display='none'; container.innerHTML=''; triggerFileLoad(song.id); };
-      item.appendChild(replaceBtn);
-    } else {
-      const statusEl = document.createElement('span'); statusEl.className = 'file-status none';
-      statusEl.textContent = 'No file';
-      item.appendChild(statusEl);
-      const loadBtn = document.createElement('button');
-      loadBtn.className = 'btn-offline'; loadBtn.innerHTML = '📁 Load File';
-      loadBtn.onclick = () => { offlinePanelOpen=false; container.style.display='none'; container.innerHTML=''; triggerFileLoad(song.id); };
-      item.appendChild(loadBtn);
+    if(newShowMode==='copy'&&songs.length>0){
+      // Copy songs from the previous show
+      const copies=songs.map((s,i)=>({
+        song_name:s.song_name,singers:s.singers,
+        karaoke_link:s.karaoke_link,position:i+1,
+        program_id:newProg.id
+      }));
+      const{data:newSongs,error:se}=await sb.from(SONGS_TABLE).insert(copies).select();
+      if(se)throw se;
     }
+
+    activeProgram=newProg;
+    viewingProgram=null;
+    document.getElementById('newShowModal').style.display='none';
+    await loadSongsForProgram(activeProgram.id);
+    applyProgramUI(activeProgram,false);
+    updateSwitcher();
+    showToast(`🎤 "${name}" is ready!`,'success');
+  }catch(e){showToast('Error: '+e.message,'error');}
+  btn.disabled=false;btn.textContent='🎤 Start New Show';
+};
+
+// ═══════════════════════════════════════════════════════
+// ACTIVE SHOW QUICK-SWITCHER
+// ═══════════════════════════════════════════════════════
+function updateSwitcher(){
+  const activeShows=programs.filter(p=>p.status==='active');
+  const switcher=document.getElementById('activeSwitcher');
+  const swName=document.getElementById('switcherName');
+  // Show switcher only when 2+ active shows
+  if(activeShows.length<2){switcher.classList.add('single');return;}
+  switcher.classList.remove('single');
+  swName.textContent=activeProgram?activeProgram.name:'–';
+}
+
+document.getElementById('switcherBtn').onclick=(e)=>{
+  e.stopPropagation();
+  const btn=document.getElementById('switcherBtn');
+  const dropdown=document.getElementById('switcherDropdown');
+  const isOpen=dropdown.style.display==='block';
+  if(isOpen){dropdown.style.display='none';btn.classList.remove('open');return;}
+  // Build dropdown
+  const activeShows=programs.filter(p=>p.status==='active');
+  dropdown.innerHTML='';
+  activeShows.forEach(prog=>{
+    const item=document.createElement('div');
+    item.className='switcher-item'+(activeProgram&&prog.id===activeProgram.id?' current':'');
+    const dot=document.createElement('span');dot.className='switcher-item-dot';item.appendChild(dot);
+    const info=document.createElement('div');info.style='flex:1;min-width:0;';
+    const nm=document.createElement('div');nm.className='switcher-item-name';nm.textContent=prog.name;info.appendChild(nm);
+    if(prog.date){const dt=document.createElement('div');dt.className='switcher-item-date';dt.textContent=prog.date;info.appendChild(dt);}
+    item.appendChild(info);
+    if(activeProgram&&prog.id===activeProgram.id){
+      const cur=document.createElement('span');cur.style='font-size:.65rem;color:var(--green);flex-shrink:0;';cur.textContent='● here';item.appendChild(cur);
+    }
+    item.onclick=async()=>{
+      if(activeProgram&&prog.id===activeProgram.id){dropdown.style.display='none';btn.classList.remove('open');return;}
+      activeProgram=prog;viewingProgram=null;
+      dropdown.style.display='none';btn.classList.remove('open');
+      showLoading(true);
+      await loadSongsForProgram(prog.id);
+      showLoading(false);
+      applyProgramUI(prog,false);
+      updateSwitcher();
+      showToast(`Switched to "${prog.name}" 🎤`,'success');
+    };
+    dropdown.appendChild(item);
+  });
+  dropdown.style.display='block';
+  btn.classList.add('open');
+};
+// Close dropdown on outside click
+document.addEventListener('click',e=>{
+  const dropdown=document.getElementById('switcherDropdown');
+  const btn=document.getElementById('switcherBtn');
+  if(dropdown&&!dropdown.contains(e.target)&&!btn.contains(e.target)){
+    dropdown.style.display='none';btn.classList.remove('open');
+  }
+});
+
+// ═══════════════════════════════════════════════════════
+// HISTORY PANEL
+// ═══════════════════════════════════════════════════════
+let historyPanelOpen=false;
+document.getElementById('historyBtn').onclick=toggleHistoryPanel;
+document.getElementById('backToActiveBtn').onclick=()=>{
+  viewingProgram=null;
+  loadSongsForProgram(activeProgram.id);
+  applyProgramUI(activeProgram,false);
+  historyPanelOpen=false;
+  document.getElementById('historyPanelContainer').style.display='none';
+  document.getElementById('historyPanelContainer').innerHTML='';
+};
+
+async function toggleHistoryPanel(){
+  const container=document.getElementById('historyPanelContainer');
+  if(historyPanelOpen){container.style.display='none';container.innerHTML='';historyPanelOpen=false;return;}
+  // Refresh programs list
+  const{data,error}=await sb.from(PROGRAMS_TABLE).select('*').order('created_at',{ascending:false});
+  if(!error)programs=data||[];
+  historyPanelOpen=true;renderHistoryPanel();container.style.display='block';
+}
+
+function renderHistoryPanel(){
+  const container=document.getElementById('historyPanelContainer');container.innerHTML='';
+  const panel=document.createElement('div');panel.className='history-panel';
+  const h3=document.createElement('h3');h3.textContent='📋 All Programs';panel.appendChild(h3);
+
+  if(!programs.length){const p=document.createElement('p');p.style.cssText='color:var(--text-dim);font-size:.82rem;';p.textContent='No programs found.';panel.appendChild(p);}
+
+  const list=document.createElement('div');list.className='history-list';
+  programs.forEach(prog=>{
+    const item=document.createElement('div');item.className='history-item';
+    if(prog.status==='active')item.classList.add('active-prog');
+    const viewingThis=viewingProgram&&viewingProgram.id===prog.id;
+    if(viewingThis)item.classList.add('viewing');
+
+    const info=document.createElement('div');info.className='history-item-info';
+    const name=document.createElement('div');name.className='history-item-name';name.textContent=prog.name||'(unnamed)';info.appendChild(name);
+    const meta=document.createElement('div');meta.className='history-item-meta';
+    const d=new Date(prog.created_at);
+    meta.textContent=(prog.date||'')+' · '+songs.length+' songs (started '+d.toLocaleDateString()+')'+
+      (prog.ended_at?' · Ended '+new Date(prog.ended_at).toLocaleDateString():'');
+    // Fetch actual song count per program for the meta
+    info.appendChild(meta);item.appendChild(info);
+
+    const badge=document.createElement('span');
+    badge.className='history-item-badge '+(prog.status==='active'?'badge-active':'badge-ended');
+    badge.textContent=prog.status==='active'?'● Active':'🔒 Ended';
+    item.appendChild(badge);
+
+    item.onclick=async()=>{
+      if(prog.status==='active'){
+        // Switch to this active program (could be any of the active ones)
+        activeProgram=prog;
+        viewingProgram=null;
+        showLoading(true);
+        await loadSongsForProgram(prog.id);
+        showLoading(false);
+        applyProgramUI(prog,false);
+        updateSwitcher();
+      } else {
+        // View ended program in read-only mode
+        viewingProgram=prog;
+        showLoading(true);
+        await loadSongsForProgram(prog.id);
+        showLoading(false);
+        applyProgramUI(prog,true);
+      }
+      historyPanelOpen=false;container.style.display='none';container.innerHTML='';
+    };
     list.appendChild(item);
   });
-
   panel.appendChild(list);
 
-  // Close button
-  const closeRow = document.createElement('div'); closeRow.style.cssText='margin-top:12px;display:flex;justify-content:flex-end;';
-  const closeBtn = document.createElement('button'); closeBtn.className='btn btn-ghost btn-sm'; closeBtn.textContent='✕ Close';
-  closeBtn.onclick = () => { container.style.display='none'; container.innerHTML=''; offlinePanelOpen=false; };
-  closeRow.appendChild(closeBtn); panel.appendChild(closeRow);
+  const closeRow=document.createElement('div');closeRow.style='margin-top:12px;display:flex;justify-content:flex-end;';
+  const closeBtn=document.createElement('button');closeBtn.className='btn btn-ghost btn-sm';closeBtn.textContent='✕ Close';
+  closeBtn.onclick=()=>{container.style.display='none';container.innerHTML='';historyPanelOpen=false;};
+  closeRow.appendChild(closeBtn);panel.appendChild(closeRow);
   container.appendChild(panel);
 }
 
-// ── ADD SONG FORM ──
-document.getElementById('addBtn').onclick = toggleAddForm;
-let formOpen = false;
-
-function toggleAddForm() {
-  const container = document.getElementById('addFormContainer');
-  if (formOpen) { container.style.display='none'; container.innerHTML=''; formOpen=false; document.getElementById('addBtn').textContent='➕ Add Song'; return; }
-  formOpen = true;
-  document.getElementById('addBtn').textContent = '✕ Cancel';
-  let selectedSingers = [];
-  container.style.display = 'block';
-  container.innerHTML = `
-    <div class="add-form">
-      <h3>✨ New Song</h3>
-      <div class="form-grid">
-        <div class="form-group full">
-          <label>Song Name *</label>
-          <input class="form-input" id="fSongName" placeholder="Enter song name…" autocomplete="off">
-        </div>
-        <div class="form-group full">
-          <label>Singers (tap to select)</label>
-          <div class="form-singers" id="fSingers"></div>
-        </div>
-        <div class="form-group full">
-          <label>Karaoke Link (optional)</label>
-          <input class="form-input" id="fLink" placeholder="Google Drive or YouTube link…" autocomplete="off">
-        </div>
-      </div>
-      <div class="form-actions">
-        <button class="btn btn-secondary" id="cancelAddBtn">Cancel</button>
-        <button class="btn btn-primary" id="saveAddBtn">💾 Save Song</button>
-      </div>
-    </div>`;
-  const singersDiv = document.getElementById('fSingers');
-  COUSINS.forEach(name => {
-    const btn = document.createElement('button'); btn.type='button'; btn.className='form-singer-btn'; btn.textContent=name;
-    btn.onclick = () => { if(selectedSingers.includes(name)){selectedSingers=selectedSingers.filter(s=>s!==name);btn.classList.remove('selected');}else{selectedSingers.push(name);btn.classList.add('selected');} };
-    singersDiv.appendChild(btn);
+// ═══════════════════════════════════════════════════════
+// ADD SONG FORM
+// ═══════════════════════════════════════════════════════
+document.getElementById('addBtn').onclick=toggleAddForm;
+let formOpen=false;
+function toggleAddForm(){
+  const container=document.getElementById('addFormContainer');
+  if(formOpen){container.style.display='none';container.innerHTML='';formOpen=false;document.getElementById('addBtn').textContent='➕ Add Song';return;}
+  if(viewingProgram)return;
+  formOpen=true;document.getElementById('addBtn').textContent='✕ Cancel';
+  let selectedSingers=[];
+  container.style.display='block';
+  container.innerHTML=`<div class="add-form"><h3>✨ New Song</h3><div class="form-grid">
+    <div class="form-group full"><label>Song Name *</label><input class="form-input" id="fSongName" placeholder="Enter song name…" autocomplete="off"></div>
+    <div class="form-group full"><label>Singers (tap to select)</label><div class="form-singers" id="fSingers"></div></div>
+    <div class="form-group full"><label>Karaoke Link (optional)</label><input class="form-input" id="fLink" placeholder="Google Drive or YouTube link…" autocomplete="off"></div>
+  </div><div class="form-actions"><button class="btn btn-secondary" id="cancelAddBtn">Cancel</button><button class="btn btn-primary" id="saveAddBtn">💾 Save Song</button></div></div>`;
+  const sd=document.getElementById('fSingers');
+  COUSINS.forEach(name=>{
+    const b=document.createElement('button');b.type='button';b.className='form-singer-btn';b.textContent=name;
+    b.onclick=()=>{if(selectedSingers.includes(name)){selectedSingers=selectedSingers.filter(s=>s!==name);b.classList.remove('selected');}else{selectedSingers.push(name);b.classList.add('selected');}};
+    sd.appendChild(b);
   });
-  document.getElementById('cancelAddBtn').onclick = toggleAddForm;
-  document.getElementById('saveAddBtn').onclick = async () => {
-    const name = document.getElementById('fSongName').value.trim();
-    if (!name) { showToast('Please enter a song name','error'); return; }
-    const btn = document.getElementById('saveAddBtn');
-    btn.disabled=true; btn.textContent='Saving…';
-    try {
-      await insertSong({ song_name: name, singers: selectedSingers, karaoke_link: document.getElementById('fLink').value.trim() });
-      toggleAddForm();
-    } catch(e) { showToast('Error: '+e.message,'error'); btn.disabled=false; btn.textContent='💾 Save Song'; }
+  document.getElementById('cancelAddBtn').onclick=toggleAddForm;
+  document.getElementById('saveAddBtn').onclick=async()=>{
+    const n=document.getElementById('fSongName').value.trim();
+    if(!n){showToast('Please enter a song name','error');return;}
+    const btn=document.getElementById('saveAddBtn');btn.disabled=true;btn.textContent='Saving…';
+    try{await insertSong({song_name:n,singers:selectedSingers,karaoke_link:document.getElementById('fLink').value.trim()});toggleAddForm();}
+    catch(e){showToast('Error: '+e.message,'error');btn.disabled=false;btn.textContent='💾 Save Song';}
   };
   document.getElementById('fSongName').focus();
 }
 
-// ── DRAG & DROP (Desktop) ──
-function onDragStart(e) { dragSrc=this; this.classList.add('dragging'); e.dataTransfer.effectAllowed='move'; }
-function onDragOver(e) { e.preventDefault(); document.querySelectorAll('tbody tr').forEach(r=>r.classList.remove('drag-over')); this.classList.add('drag-over'); }
-function onDrop(e) {
-  e.preventDefault(); if(dragSrc===this) return;
+// ═══════════════════════════════════════════════════════
+// OFFLINE FILE MANAGER
+// ═══════════════════════════════════════════════════════
+let pendingFileSongId=null;
+let offlinePanelOpen=false;
+document.getElementById('fileInput').onchange=async e=>{
+  const file=e.target.files[0];if(!file||!pendingFileSongId)return;e.target.value='';
+  showToast('Saving file to device…','info');
+  try{await idbSave(pendingFileSongId,file,file.name);offlineFileMap[pendingFileSongId]={fileName:file.name,savedAt:Date.now()};renderTable();showToast(`✅ "${file.name}" saved for offline play!`,'success');}
+  catch(err){showToast('Failed: '+err.message,'error');}
+  pendingFileSongId=null;
+};
+document.getElementById('offlineMgrBtn').onclick=()=>{
+  const container=document.getElementById('offlinePanelContainer');
+  if(offlinePanelOpen){container.style.display='none';container.innerHTML='';offlinePanelOpen=false;return;}
+  offlinePanelOpen=true;renderOfflinePanel();container.style.display='block';
+};
+function renderOfflinePanel(){
+  const container=document.getElementById('offlinePanelContainer');container.innerHTML='';
+  const panel=document.createElement('div');panel.className='offline-panel';
+  panel.innerHTML='<h3>📂 Offline File Manager</h3><p>Load audio/video files for offline play on stage — no internet needed.</p>';
+  const list=document.createElement('div');list.className='offline-list';
+  songs.forEach(song=>{
+    const item=document.createElement('div');item.className='offline-item';
+    const nm=document.createElement('span');nm.className='song-name';nm.textContent=song.song_name||'(unnamed)';item.appendChild(nm);
+    const info=offlineFileMap[song.id];
+    if(info){
+      const st=document.createElement('span');st.className='file-status saved';st.textContent=`✅ ${info.fileName}`;item.appendChild(st);
+      const rb=document.createElement('button');rb.className='btn btn-danger btn-sm';rb.textContent='🗑';
+      rb.onclick=async()=>{await idbDel(song.id);delete offlineFileMap[song.id];renderTable();renderOfflinePanel();showToast('Offline file removed','success');};item.appendChild(rb);
+      const rep=document.createElement('button');rep.className='btn-offline';rep.innerHTML='🔄 Replace';
+      rep.onclick=()=>{offlinePanelOpen=false;container.style.display='none';container.innerHTML='';pendingFileSongId=song.id;document.getElementById('fileInput').click();};item.appendChild(rep);
+    } else {
+      const st=document.createElement('span');st.className='file-status none';st.textContent='No file';item.appendChild(st);
+      const lb=document.createElement('button');lb.className='btn-offline';lb.innerHTML='📁 Load File';
+      lb.onclick=()=>{offlinePanelOpen=false;container.style.display='none';container.innerHTML='';pendingFileSongId=song.id;document.getElementById('fileInput').click();};item.appendChild(lb);
+    }
+    list.appendChild(item);
+  });
+  panel.appendChild(list);
+  const cr=document.createElement('div');cr.style='margin-top:12px;display:flex;justify-content:flex-end;';
+  const cb=document.createElement('button');cb.className='btn btn-ghost btn-sm';cb.textContent='✕ Close';
+  cb.onclick=()=>{container.style.display='none';container.innerHTML='';offlinePanelOpen=false;};
+  cr.appendChild(cb);panel.appendChild(cr);container.appendChild(panel);
+}
+
+// ═══════════════════════════════════════════════════════
+// DRAG & DROP
+// ═══════════════════════════════════════════════════════
+function onDragStart(e){dragSrc=this;this.classList.add('dragging');e.dataTransfer.effectAllowed='move';}
+function onDragOver(e){e.preventDefault();document.querySelectorAll('tbody tr').forEach(r=>r.classList.remove('drag-over'));this.classList.add('drag-over');}
+function onDrop(e){
+  e.preventDefault();if(dragSrc===this)return;
   const rows=[...document.getElementById('songBody').querySelectorAll('tr')];
-  const [moved]=songs.splice(rows.indexOf(dragSrc),1); songs.splice(rows.indexOf(this),0,moved);
-  renderTable(); savePositions(); showToast('Order updated 🎶','success');
+  const[moved]=songs.splice(rows.indexOf(dragSrc),1);songs.splice(rows.indexOf(this),0,moved);
+  renderTable();savePositions();showToast('Order updated 🎶','success');
 }
-function onDragEnd() { document.querySelectorAll('tbody tr').forEach(r=>{r.classList.remove('dragging');r.classList.remove('drag-over');}); dragSrc=null; }
+function onDragEnd(){document.querySelectorAll('tbody tr').forEach(r=>{r.classList.remove('dragging');r.classList.remove('drag-over');});dragSrc=null;}
 
-// ── TOUCH DRAG (Mobile) ──
-function setupTouchDrag(tr) {
-  let startY, cloneEl, startIdx;
-  tr.addEventListener('touchstart', (e) => {
-    if (!e.target.closest('.drag-handle')) return;
-    e.preventDefault();
-    startY = e.touches[0].clientY;
-    startIdx = [...document.querySelectorAll('#songBody tr')].indexOf(tr);
-    tr.classList.add('dragging');
-    cloneEl = tr.cloneNode(true);
-    cloneEl.style.cssText = `position:fixed;left:${tr.getBoundingClientRect().left}px;width:${tr.offsetWidth}px;opacity:0.85;z-index:999;pointer-events:none;background:var(--surface2);border-radius:var(--radius);box-shadow:0 8px 32px rgba(0,0,0,0.5);`;
-    cloneEl.style.top = tr.getBoundingClientRect().top + 'px';
-    document.body.appendChild(cloneEl);
-  }, { passive: false });
-  tr.addEventListener('touchmove', (e) => {
-    if (!cloneEl) return; e.preventDefault();
-    cloneEl.style.top = (tr.getBoundingClientRect().top + e.touches[0].clientY - startY) + 'px';
-    const rows = [...document.querySelectorAll('#songBody tr')];
-    rows.forEach(r=>r.classList.remove('drag-over'));
-    const el = document.elementFromPoint(e.touches[0].clientX, e.touches[0].clientY);
-    const tgt = el && el.closest('tr');
-    if (tgt && tgt!==tr && rows.includes(tgt)) tgt.classList.add('drag-over');
-  }, { passive: false });
-  tr.addEventListener('touchend', (e) => {
-    if (!cloneEl) return;
-    tr.classList.remove('dragging'); document.body.removeChild(cloneEl); cloneEl=null;
-    const rows = [...document.querySelectorAll('#songBody tr')];
-    rows.forEach(r=>r.classList.remove('drag-over'));
-    const el = document.elementFromPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
-    const tgt = el && el.closest('tr');
-    if (tgt && tgt!==tr && rows.includes(tgt)) {
-      const [moved]=songs.splice(startIdx,1); songs.splice(rows.indexOf(tgt),0,moved);
-      renderTable(); savePositions(); showToast('Order updated 🎶','success');
+function setupTouchDrag(tr){
+  let startY,cloneEl,startIdx;
+  tr.addEventListener('touchstart',e=>{
+    if(!e.target.closest('.drag-handle'))return;e.preventDefault();
+    startY=e.touches[0].clientY;startIdx=[...document.querySelectorAll('#songBody tr')].indexOf(tr);
+    tr.classList.add('dragging');cloneEl=tr.cloneNode(true);
+    cloneEl.style.cssText=`position:fixed;left:${tr.getBoundingClientRect().left}px;width:${tr.offsetWidth}px;opacity:.85;z-index:999;pointer-events:none;background:var(--surface2);border-radius:var(--radius);box-shadow:0 8px 32px rgba(0,0,0,.5);`;
+    cloneEl.style.top=tr.getBoundingClientRect().top+'px';document.body.appendChild(cloneEl);
+  },{passive:false});
+  tr.addEventListener('touchmove',e=>{
+    if(!cloneEl)return;e.preventDefault();
+    cloneEl.style.top=(tr.getBoundingClientRect().top+e.touches[0].clientY-startY)+'px';
+    const rows=[...document.querySelectorAll('#songBody tr')];rows.forEach(r=>r.classList.remove('drag-over'));
+    const el=document.elementFromPoint(e.touches[0].clientX,e.touches[0].clientY);
+    const tgt=el&&el.closest('tr');if(tgt&&tgt!==tr&&rows.includes(tgt))tgt.classList.add('drag-over');
+  },{passive:false});
+  tr.addEventListener('touchend',e=>{
+    if(!cloneEl)return;tr.classList.remove('dragging');document.body.removeChild(cloneEl);cloneEl=null;
+    const rows=[...document.querySelectorAll('#songBody tr')];rows.forEach(r=>r.classList.remove('drag-over'));
+    const el=document.elementFromPoint(e.changedTouches[0].clientX,e.changedTouches[0].clientY);
+    const tgt=el&&el.closest('tr');
+    if(tgt&&tgt!==tr&&rows.includes(tgt)){
+      const[moved]=songs.splice(startIdx,1);songs.splice(rows.indexOf(tgt),0,moved);
+      renderTable();savePositions();showToast('Order updated 🎶','success');
     }
   });
 }
 
-
-// ════════════════════════════════════════════
-// 📤  IMPORT FROM EXCEL
-// ════════════════════════════════════════════
-let importRows = [];
-let importColumns = [];
-let importMode = 'append'; // 'append' or 'replace'
-
-document.getElementById('importBtn').onclick = () => {
-  document.getElementById('excelInput').click();
-};
-
-document.getElementById('excelInput').onchange = (e) => {
-  const file = e.target.files[0];
-  if (!file) return;
-  e.target.value = '';
-  const reader = new FileReader();
-  reader.onload = (ev) => {
-    try {
-      const wb = XLSX.read(ev.target.result, { type: 'array' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
-      if (!data || data.length < 2) { showToast('File is empty or has no data rows', 'error'); return; }
-      importColumns = (data[0] || []).map(c => String(c).trim());
-      importRows = data.slice(1).filter(row => row.some(cell => String(cell).trim() !== ''));
-      showImportModal();
-    } catch(err) {
-      showToast('Could not read file: ' + err.message, 'error');
-    }
-  };
-  reader.readAsArrayBuffer(file);
-};
-
-function guessCol(cols, hints) {
-  for (const h of hints) {
-    const idx = cols.findIndex(c => c.toLowerCase().includes(h.toLowerCase()));
-    if (idx !== -1) return idx;
-  }
-  return -1;
-}
-
-function showImportModal() {
-  const body = document.getElementById('importModalBody');
-  body.innerHTML = '';
-
-  // Auto-guess column mapping
-  let guessName   = guessCol(importColumns, ['song','name','title','track']);
-  let guessSinger = guessCol(importColumns, ['singer','singers','artist','performer','vocal']);
-  let guessLink   = guessCol(importColumns, ['karaoke','link','url','drive','youtube']);
-  if (guessName   === -1) guessName   = 0;
-  if (guessSinger === -1) guessSinger = importColumns.length > 1 ? 1 : -1;
-  if (guessLink   === -1) guessLink   = importColumns.length > 2 ? 2 : -1;
-
-  // Instructions
-  const inst = document.createElement('p');
-  inst.className = 'import-instructions';
-  inst.innerHTML = `Found <b style="color:var(--gold)">${importRows.length} rows</b> in the file. Map the columns below, then choose how to import.`;
-  body.appendChild(inst);
-
-  // Column mapping
-  const mapDiv = document.createElement('div');
-  mapDiv.className = 'import-col-map';
-  const fields = [
-    { id: 'mapName',   label: 'Song Name *',  guess: guessName },
-    { id: 'mapSinger', label: 'Singer(s)',     guess: guessSinger },
-    { id: 'mapLink',   label: 'Karaoke Link',  guess: guessLink },
-  ];
-  fields.forEach(f => {
-    const grp = document.createElement('div');
-    const lbl = document.createElement('label'); lbl.textContent = f.label;
-    const sel = document.createElement('select'); sel.id = f.id;
-    // "— skip —" option
-    const skipOpt = document.createElement('option'); skipOpt.value = '-1'; skipOpt.textContent = '— skip —';
-    sel.appendChild(skipOpt);
-    importColumns.forEach((col, i) => {
-      const opt = document.createElement('option'); opt.value = i; opt.textContent = col || `Column ${i+1}`;
-      sel.appendChild(opt);
-    });
-    sel.value = f.guess;
-    sel.onchange = () => updatePreview();
-    grp.appendChild(lbl); grp.appendChild(sel);
-    mapDiv.appendChild(grp);
-  });
-  body.appendChild(mapDiv);
-
-  // Import mode toggle
-  const modeRow = document.createElement('div');
-  modeRow.className = 'import-mode-row';
-  ['append','replace'].forEach(mode => {
-    const btn = document.createElement('button');
-    btn.className = 'import-mode-btn' + (importMode === mode ? ' active' : '');
-    btn.textContent = mode === 'append' ? '➕ Add to existing' : '🔄 Replace all songs';
-    btn.title = mode === 'append' ? 'New songs will be added after existing ones' : 'All current songs will be deleted and replaced';
-    btn.onclick = () => {
-      importMode = mode;
-      modeRow.querySelectorAll('.import-mode-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    };
-    modeRow.appendChild(btn);
-  });
-  body.appendChild(modeRow);
-
-  // Preview table
-  const summary = document.createElement('p');
-  summary.className = 'import-summary';
-  summary.id = 'importSummary';
-  body.appendChild(summary);
-
-  const previewWrap = document.createElement('div');
-  previewWrap.className = 'import-preview-wrap';
-  const previewTable = document.createElement('table');
-  previewTable.className = 'import-preview-table';
-  previewTable.id = 'importPreviewTable';
-  previewWrap.appendChild(previewTable);
-  body.appendChild(previewWrap);
-
-  // Actions
-  const actDiv = document.createElement('div');
-  actDiv.className = 'import-actions';
-  const cancelBtn = document.createElement('button');
-  cancelBtn.className = 'btn btn-ghost'; cancelBtn.textContent = 'Cancel';
-  cancelBtn.onclick = () => { document.getElementById('importModal').style.display = 'none'; };
-  const confirmBtn = document.createElement('button');
-  confirmBtn.className = 'btn btn-primary'; confirmBtn.id = 'importConfirmBtn';
-  confirmBtn.textContent = '📤 Import Songs';
-  confirmBtn.onclick = () => executeImport();
-  actDiv.appendChild(cancelBtn); actDiv.appendChild(confirmBtn);
-  body.appendChild(actDiv);
-
-  updatePreview();
-  document.getElementById('importModal').style.display = 'flex';
-}
-
-function updatePreview() {
-  const nameIdx   = parseInt(document.getElementById('mapName')?.value ?? -1);
-  const singerIdx = parseInt(document.getElementById('mapSinger')?.value ?? -1);
-  const linkIdx   = parseInt(document.getElementById('mapLink')?.value ?? -1);
-
-  const preview = importRows.slice(0, 6);
-  const table = document.getElementById('importPreviewTable');
-  if (!table) return;
-  table.innerHTML = '';
-
-  // Header
-  const thead = table.createTHead();
-  const hr = thead.insertRow();
-  ['Song Name','Singer(s)','Karaoke Link'].forEach(h => {
-    const th = document.createElement('th'); th.textContent = h; hr.appendChild(th);
-  });
-
-  // Rows
-  const tbody = table.createTBody();
-  preview.forEach(row => {
-    const tr = tbody.insertRow();
-    const name   = nameIdx   >= 0 ? String(row[nameIdx]   || '').trim() : '—';
-    const singer = singerIdx >= 0 ? String(row[singerIdx] || '').trim() : '—';
-    const link   = linkIdx   >= 0 ? String(row[linkIdx]   || '').trim() : '—';
-    [name, singer, link].forEach(val => {
-      const td = tr.insertCell();
-      td.textContent = val || '—';
-    });
-  });
-
-  const valid = importRows.filter(row => {
-    const n = nameIdx >= 0 ? String(row[nameIdx]||'').trim() : '';
-    return n !== '';
-  }).length;
-
-  const summary = document.getElementById('importSummary');
-  if (summary) summary.innerHTML = `Preview (first ${Math.min(6,importRows.length)} of ${importRows.length} rows) · <b>${valid} valid songs</b> will be imported`;
-}
-
-async function executeImport() {
-  const nameIdx   = parseInt(document.getElementById('mapName')?.value ?? -1);
-  const singerIdx = parseInt(document.getElementById('mapSinger')?.value ?? -1);
-  const linkIdx   = parseInt(document.getElementById('mapLink')?.value ?? -1);
-
-  if (nameIdx < 0) { showToast('Please map the Song Name column', 'error'); return; }
-
-  const toImport = importRows
-    .map(row => ({
-      song_name:   String(row[nameIdx]   || '').trim(),
-      singers_raw: singerIdx >= 0 ? String(row[singerIdx] || '').trim() : '',
-      karaoke_link: linkIdx >= 0 ? String(row[linkIdx]   || '').trim() : '',
-    }))
-    .filter(r => r.song_name !== '');
-
-  if (!toImport.length) { showToast('No valid songs found to import', 'error'); return; }
-
-  const confirmBtn = document.getElementById('importConfirmBtn');
-  confirmBtn.disabled = true; confirmBtn.textContent = 'Importing…';
-
-  try {
-    // Parse singers: split by comma, semicolon, or &
-    const parsed = toImport.map((r, i) => {
-      const rawSingers = r.singers_raw;
-      let singers = [];
-      if (rawSingers) {
-        singers = rawSingers.split(/[,;&\/]+/).map(s => s.trim()).filter(Boolean);
-        // Validate against known cousins (flexible match)
-        singers = singers.map(s => {
-          const match = COUSINS.find(c => c.toLowerCase() === s.toLowerCase());
-          return match || s; // keep original if not found
-        });
-      }
-      return { song_name: r.song_name, singers, karaoke_link: r.karaoke_link };
-    });
-
-    if (importMode === 'replace') {
-      // Delete all existing songs first
-      if (songs.length > 0) {
-        const { error } = await supabase_client.from(TABLE).delete().in('id', songs.map(s=>s.id));
-        if (error) throw error;
-        // Clear offline files for deleted songs
-        for (const s of songs) {
-          try { await idbDeleteFile(s.id); delete offlineFileMap[s.id]; } catch(e) {}
-        }
-        songs = [];
-      }
-    }
-
-    // Insert new songs
-    let pos = songs.length ? Math.max(...songs.map(s=>s.position||0)) + 1 : 1;
-    const inserts = parsed.map((r, i) => ({
-      song_name: r.song_name, singers: r.singers,
-      karaoke_link: r.karaoke_link, position: pos + i
-    }));
-
-    const { data, error } = await supabase_client.from(TABLE).insert(inserts).select();
-    if (error) throw error;
-
-    songs = importMode === 'replace' ? data : [...songs, ...data];
-    songs.sort((a,b)=>(a.position||0)-(b.position||0));
-    renderTable();
-    setStatus(`${songs.length} songs`, 'ok');
-    document.getElementById('importModal').style.display = 'none';
-    showToast(`✅ Imported ${data.length} song${data.length!==1?'s':''}!`, 'success');
-  } catch(err) {
-    showToast('Import failed: ' + err.message, 'error');
-    confirmBtn.disabled = false; confirmBtn.textContent = '📤 Import Songs';
-  }
-}
-
-document.getElementById('importModalClose').onclick = () => {
-  document.getElementById('importModal').style.display = 'none';
-};
-document.getElementById('importModal').addEventListener('click', (e) => {
-  if (e.target === e.currentTarget) document.getElementById('importModal').style.display = 'none';
-});
-
-// ── EXPORT ──
-document.getElementById('exportBtn').onclick = () => {
-  if (!songs.length) { showToast('No songs to export','error'); return; }
-  const rows = songs.map((s,i) => ({'#':i+1,'Song Name':s.song_name||'','Singer(s)':Array.isArray(s.singers)?s.singers.join(', '):'',' Karaoke Link':s.karaoke_link||'','Offline File':offlineFileMap[s.id]?offlineFileMap[s.id].fileName:''}));
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(rows);
-  ws['!cols'] = [{wch:5},{wch:35},{wch:40},{wch:55},{wch:30}];
+// ═══════════════════════════════════════════════════════
+// EXPORT
+// ═══════════════════════════════════════════════════════
+document.getElementById('exportBtn').onclick=()=>{
+  if(!songs.length){showToast('No songs to export','error');return;}
+  const prog=viewingProgram||activeProgram;
+  const rows=songs.map((s,i)=>({'#':i+1,'Song Name':s.song_name||'','Singer(s)':Array.isArray(s.singers)?s.singers.join(', '):'',' Karaoke Link':s.karaoke_link||'','Offline File':offlineFileMap[s.id]?offlineFileMap[s.id].fileName:''}));
+  const wb=XLSX.utils.book_new();const ws=XLSX.utils.json_to_sheet(rows);
+  ws['!cols']=[{wch:5},{wch:35},{wch:40},{wch:55},{wch:30}];
   XLSX.utils.book_append_sheet(wb,ws,'Setlist');
-  XLSX.writeFile(wb,'Sparsh_Setlist.xlsx');
+  const fn=((prog?prog.name+' '+(prog.date||''):'Setlist')).replace(/[^a-zA-Z0-9 _-]/g,'').trim().replace(/\s+/g,'_');
+  XLSX.writeFile(wb,(fn||'Setlist')+'.xlsx');
   showToast('Exported! 📥','success');
 };
 
-document.getElementById('refreshBtn').onclick = () => fetchSongs();
-
-// ── UTILS ──
-function showLoading(show) {
-  document.getElementById('loadingWrap').style.display = show ? 'block' : 'none';
-  if (show) { document.getElementById('songTable').style.display='none'; document.getElementById('emptyState').style.display='none'; }
+// ═══════════════════════════════════════════════════════
+// IMPORT
+// ═══════════════════════════════════════════════════════
+let importRows=[],importColumns=[],importMode='append';
+document.getElementById('importBtn').onclick=()=>{if(!viewingProgram)document.getElementById('excelInput').click();else showToast('Cannot import in read-only view','error');};
+document.getElementById('excelInput').onchange=e=>{
+  const file=e.target.files[0];if(!file)return;e.target.value='';
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const wb=XLSX.read(ev.target.result,{type:'array'});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const data=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
+      if(!data||data.length<2){showToast('File is empty or has no data rows','error');return;}
+      importColumns=(data[0]||[]).map(c=>String(c).trim());
+      importRows=data.slice(1).filter(row=>row.some(cell=>String(cell).trim()!==''));
+      showImportModal();
+    }catch(err){showToast('Could not read file: '+err.message,'error');}
+  };
+  reader.readAsArrayBuffer(file);
+};
+function guessCol(cols,hints){for(const h of hints){const i=cols.findIndex(c=>c.toLowerCase().includes(h.toLowerCase()));if(i!==-1)return i;}return -1;}
+function showImportModal(){
+  const body=document.getElementById('importModalBody');body.innerHTML='';
+  let gN=guessCol(importColumns,['song','name','title','track']);let gS=guessCol(importColumns,['singer','artist','performer']);let gL=guessCol(importColumns,['karaoke','link','url','drive','youtube']);
+  if(gN===-1)gN=0;if(gS===-1)gS=importColumns.length>1?1:-1;if(gL===-1)gL=importColumns.length>2?2:-1;
+  const inst=document.createElement('p');inst.className='import-instructions';
+  inst.innerHTML=`Found <b style="color:var(--gold)">${importRows.length} rows</b>. Map columns below then choose how to import.`;body.appendChild(inst);
+  const mapDiv=document.createElement('div');mapDiv.className='import-col-map';
+  [{id:'mapName',label:'Song Name *',guess:gN},{id:'mapSinger',label:'Singer(s)',guess:gS},{id:'mapLink',label:'Karaoke Link',guess:gL}].forEach(f=>{
+    const grp=document.createElement('div');const lbl=document.createElement('label');lbl.textContent=f.label;
+    const sel=document.createElement('select');sel.id=f.id;
+    const skip=document.createElement('option');skip.value='-1';skip.textContent='— skip —';sel.appendChild(skip);
+    importColumns.forEach((col,i)=>{const opt=document.createElement('option');opt.value=i;opt.textContent=col||`Column ${i+1}`;sel.appendChild(opt);});
+    sel.value=f.guess;sel.onchange=()=>updateImportPreview();grp.appendChild(lbl);grp.appendChild(sel);mapDiv.appendChild(grp);
+  });body.appendChild(mapDiv);
+  const modeRow=document.createElement('div');modeRow.className='import-mode-row';
+  ['append','replace'].forEach(mode=>{
+    const btn=document.createElement('button');btn.className='import-mode-btn'+(importMode===mode?' active':'');
+    btn.textContent=mode==='append'?'➕ Add to existing':'🔄 Replace all songs';
+    btn.onclick=()=>{importMode=mode;modeRow.querySelectorAll('.import-mode-btn').forEach(b=>b.classList.toggle('active',b===btn));};modeRow.appendChild(btn);
+  });body.appendChild(modeRow);
+  const sum=document.createElement('p');sum.className='import-summary';sum.id='importSummary';body.appendChild(sum);
+  const pw=document.createElement('div');pw.className='import-preview-wrap';const pt=document.createElement('table');pt.className='import-preview-table';pt.id='importPreviewTable';pw.appendChild(pt);body.appendChild(pw);
+  const act=document.createElement('div');act.className='import-actions';
+  const cb=document.createElement('button');cb.className='btn btn-ghost';cb.textContent='Cancel';cb.onclick=()=>document.getElementById('importModal').style.display='none';
+  const sb2=document.createElement('button');sb2.className='btn btn-primary';sb2.id='importConfirmBtn';sb2.textContent='📤 Import Songs';sb2.onclick=()=>executeImport();
+  act.appendChild(cb);act.appendChild(sb2);body.appendChild(act);
+  updateImportPreview();document.getElementById('importModal').style.display='flex';
 }
-function setStatus(msg, type='') { const el=document.getElementById('status-msg'); el.textContent=msg; el.className=type; }
+function updateImportPreview(){
+  const nI=parseInt(document.getElementById('mapName')?.value??-1);
+  const sI=parseInt(document.getElementById('mapSinger')?.value??-1);
+  const lI=parseInt(document.getElementById('mapLink')?.value??-1);
+  const table=document.getElementById('importPreviewTable');if(!table)return;table.innerHTML='';
+  const thead=table.createTHead();const hr=thead.insertRow();['Song Name','Singer(s)','Karaoke Link'].forEach(h=>{const th=document.createElement('th');th.textContent=h;hr.appendChild(th);});
+  const tbody=table.createTBody();importRows.slice(0,6).forEach(row=>{
+    const tr=tbody.insertRow();[nI>=0?String(row[nI]||'').trim():'—',sI>=0?String(row[sI]||'').trim():'—',lI>=0?String(row[lI]||'').trim():'—'].forEach(v=>{const td=tr.insertCell();td.textContent=v||'—';});
+  });
+  const valid=importRows.filter(r=>nI>=0&&String(r[nI]||'').trim()!=='').length;
+  const s=document.getElementById('importSummary');if(s)s.innerHTML=`Preview (first ${Math.min(6,importRows.length)} of ${importRows.length}) · <b>${valid} valid songs</b> will be imported`;
+}
+async function executeImport(){
+  const nI=parseInt(document.getElementById('mapName')?.value??-1);
+  const sI=parseInt(document.getElementById('mapSinger')?.value??-1);
+  const lI=parseInt(document.getElementById('mapLink')?.value??-1);
+  if(nI<0){showToast('Please map the Song Name column','error');return;}
+  const toImport=importRows.map(row=>({song_name:String(row[nI]||'').trim(),singers_raw:sI>=0?String(row[sI]||'').trim():'',karaoke_link:lI>=0?String(row[lI]||'').trim():''})).filter(r=>r.song_name!=='');
+  if(!toImport.length){showToast('No valid songs found','error');return;}
+  const btn=document.getElementById('importConfirmBtn');btn.disabled=true;btn.textContent='Importing…';
+  try{
+    const parsed=toImport.map(r=>({song_name:r.song_name,singers:r.singers_raw?r.singers_raw.split(/[,;&/]+/).map(s=>s.trim()).filter(Boolean).map(s=>COUSINS.find(c=>c.toLowerCase()===s.toLowerCase())||s):[],karaoke_link:r.karaoke_link}));
+    if(importMode==='replace'){
+      if(songs.length){const{error}=await sb.from(SONGS_TABLE).delete().in('id',songs.map(s=>s.id));if(error)throw error;for(const s of songs){try{await idbDel(s.id);delete offlineFileMap[s.id];}catch(e){}}songs=[];}
+    }
+    let pos=songs.length?Math.max(...songs.map(s=>s.position||0))+1:1;
+    const inserts=parsed.map((r,i)=>({song_name:r.song_name,singers:r.singers,karaoke_link:r.karaoke_link,position:pos+i,program_id:activeProgram.id}));
+    const{data,error}=await sb.from(SONGS_TABLE).insert(inserts).select();if(error)throw error;
+    songs=importMode==='replace'?data:[...songs,...data];songs.sort((a,b)=>(a.position||0)-(b.position||0));
+    renderTable();setStatus(`${songs.length} songs`,'ok');
+    document.getElementById('importModal').style.display='none';
+    showToast(`✅ Imported ${data.length} song${data.length!==1?'s':''}!`,'success');
+  }catch(err){showToast('Import failed: '+err.message,'error');btn.disabled=false;btn.textContent='📤 Import Songs';}
+}
+document.getElementById('importModalClose').onclick=()=>document.getElementById('importModal').style.display='none';
+document.getElementById('importModal').addEventListener('click',e=>{if(e.target===e.currentTarget)document.getElementById('importModal').style.display='none';});
+
+// ═══════════════════════════════════════════════════════
+// REFRESH
+// ═══════════════════════════════════════════════════════
+document.getElementById('refreshBtn').onclick=async()=>{
+  showLoading(true);setStatus('Refreshing…');
+  try{
+    const{data:progs}=await sb.from(PROGRAMS_TABLE).select('*').order('created_at',{ascending:false});
+    programs=progs||[];activeProgram=programs.find(p=>p.status==='active')||activeProgram;
+    const prog=viewingProgram?programs.find(p=>p.id===viewingProgram.id)||viewingProgram:activeProgram;
+    await loadSongsForProgram(prog.id);
+    applyProgramUI(prog,!!viewingProgram);
+    updateSwitcher();
+    setStatus(`${songs.length} songs`,'ok');
+  }catch(e){setStatus('Error','err');}
+  showLoading(false);
+};
+
+// ═══════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════
+function showLoading(show){
+  document.getElementById('loadingWrap').style.display=show?'block':'none';
+  if(show){document.getElementById('songTable').style.display='none';document.getElementById('emptyState').style.display='none';}
+}
+function setStatus(msg,type=''){const el=document.getElementById('status-msg');el.textContent=msg;el.className=type;}
 let toastTimer;
-function showToast(msg, type='success') {
-  const t=document.getElementById('toast'); t.textContent=msg; t.className='show '+type;
-  clearTimeout(toastTimer); toastTimer=setTimeout(()=>{t.className='';},3000);
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');t.textContent=msg;t.className='show '+type;
+  clearTimeout(toastTimer);toastTimer=setTimeout(()=>{t.className='';},3200);
 }
 </script>
 </body>
