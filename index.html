@@ -298,6 +298,39 @@ tbody td:last-child{border-radius:0 var(--radius) var(--radius) 0;border-right:1
 ::-webkit-scrollbar{width:4px;height:4px;}
 ::-webkit-scrollbar-track{background:var(--bg);}
 ::-webkit-scrollbar-thumb{background:var(--purple-mid);border-radius:2px;}
+/* NEW SONG BADGE */
+.new-song-badge{display:inline-block;background:linear-gradient(135deg,#ff6b6b,#ff4444);
+  color:#fff;font-size:.55rem;font-weight:800;padding:1px 5px;border-radius:6px;
+  margin-left:5px;vertical-align:middle;letter-spacing:.06em;text-transform:uppercase;
+  animation:badgePop .3s cubic-bezier(.22,1,.36,1);}
+@keyframes badgePop{from{transform:scale(0);opacity:0;}to{transform:scale(1);opacity:1;}}
+
+
+/* DELETE PROGRAM */
+.history-item-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+
+/* SEARCH BAR */
+.search-wrap{padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:8px;}
+.search-input-wrap{position:relative;flex:1;max-width:360px;}
+.search-input{width:100%;background:rgba(255,255,255,.07);border:1.5px solid var(--border);
+  color:var(--text);border-radius:24px;padding:7px 36px 7px 14px;
+  font-family:'Poppins',sans-serif;font-size:clamp(.82rem,3vw,.9rem);outline:none;
+  transition:border-color .15s;}
+.search-input:focus{border-color:var(--gold);}
+.search-input::placeholder{color:var(--text-dim);}
+.search-clear{position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:1rem;
+  padding:2px;line-height:1;display:none;}
+.search-clear.visible{display:block;}
+.search-clear:hover{color:var(--rose);}
+.search-count{font-size:.75rem;color:var(--text-dim);white-space:nowrap;flex-shrink:0;}
+.search-count.active{color:var(--gold);}
+/* highlight matched text */
+.search-highlight{background:rgba(255,215,0,.3);border-radius:3px;padding:0 2px;color:var(--gold-light);}
+/* dim non-matching rows */
+tbody tr.search-hidden{display:none;}
+
 @media(max-width:480px){.link-cell .cell-text{max-width:60px;}}
 </style>
 </head>
@@ -351,8 +384,17 @@ tbody td:last-child{border-radius:0 var(--radius) var(--radius) 0;border-right:1
   <button class="btn btn-primary" id="addBtn">➕ Add Song</button>
   <button class="btn btn-end btn-sm" id="endShowBtn">🎬 End Show</button>
   <button class="btn btn-newshow btn-sm" id="newShowBtn">🎤 New Show</button>
+  <button class="btn btn-danger btn-sm" id="deleteProgBtn" title="Delete this program">🗑 Delete</button>
   <div class="spacer"></div>
   <span id="status-msg">Connecting…</span>
+</div>
+
+<div class="search-wrap" id="searchWrap">
+  <div class="search-input-wrap">
+    <input class="search-input" id="searchInput" placeholder="🔍 Search song or singer…" autocomplete="off" type="search">
+    <button class="search-clear" id="searchClear" title="Clear search">✕</button>
+  </div>
+  <span class="search-count" id="searchCount"></span>
 </div>
 
 <div id="addFormContainer" style="display:none;"></div>
@@ -499,6 +541,8 @@ let activeProgram = null;  // the one with status='active'
 let viewingProgram = null; // null = viewing active, else a past program object
 let editingCell  = null;
 let dragSrc      = null;
+// 'is_new' is stored in DB on the songs row — no local state needed
+
 
 // ═══════════════════════════════════════════════════════
 // INDEXEDDB (offline audio files)
@@ -594,10 +638,20 @@ async function loadSongsForProgram(programId){
 
 async function insertSong(song){
   const pos=songs.length?Math.max(...songs.map(s=>s.position||0))+1:1;
+
+  // Clear is_new on all existing songs for this program first
+  if(songs.length){
+    await sb.from(SONGS_TABLE).update({is_new:false})
+      .eq('program_id',activeProgram.id).eq('is_new',true);
+    songs.forEach(s=>s.is_new=false);
+  }
+
+  // Insert new song with is_new:true
   const{data,error}=await sb.from(SONGS_TABLE).insert([{
     song_name:song.song_name,singers:song.singers,
     karaoke_link:song.karaoke_link,position:pos,
-    program_id:activeProgram.id
+    program_id:activeProgram.id,
+    is_new:true
   }]).select().single();
   if(error)throw error;
   songs.push(data);
@@ -655,6 +709,7 @@ function applyProgramUI(prog,isHistory){
     editBtn.style.display='none';
     endBtn.style.display='none';
     newShowBtn.style.display='none';
+    document.getElementById('deleteProgBtn').style.display='none';
     addBtn.style.display='none';
     actionsHdr.style.display='none';
     document.getElementById('historyBanner').classList.add('show');
@@ -672,12 +727,14 @@ function applyProgramUI(prog,isHistory){
       pill.className='prog-status-pill active';
       endBtn.style.display='';
       newShowBtn.style.display='';
+      document.getElementById('deleteProgBtn').style.display='';
     } else {
       // ended but it's the one we're managing (shouldn't normally happen)
       pill.textContent='🔒 Ended';
       pill.className='prog-status-pill ended';
       endBtn.style.display='none';
       newShowBtn.style.display='';
+      document.getElementById('deleteProgBtn').style.display='';
     }
   }
 }
@@ -705,9 +762,14 @@ function renderTable(){
     // Number
     const tdN=document.createElement('td');tdN.className='row-num';tdN.textContent=idx+1;tr.appendChild(tdN);
     // Song name
-    const tdS=document.createElement('td');
+    const tdS=document.createElement('td');tdS.style='position:relative;';
     if(isReadOnly){const s=document.createElement('span');s.textContent=song.song_name||'—';tdS.appendChild(s);}
-    else tdS.appendChild(makeEditableCell(song,'song_name',song.song_name||'—'));
+    else{
+      const nameWrap=document.createElement('span');nameWrap.style='display:inline-flex;align-items:center;gap:4px;';
+      nameWrap.appendChild(makeEditableCell(song,'song_name',song.song_name||'—'));
+      if(song.is_new){const badge=document.createElement('span');badge.className='new-song-badge';badge.textContent='NEW';nameWrap.appendChild(badge);}
+      tdS.appendChild(nameWrap);
+    }
     tr.appendChild(tdS);
     // Singers
     const tdSi=document.createElement('td');
@@ -907,6 +969,7 @@ document.getElementById('editTitleSaveBtn').onclick=async()=>{
 // END SHOW
 // ═══════════════════════════════════════════════════════
 document.getElementById('newShowBtn').onclick=()=>openNewShowModal();
+document.getElementById('deleteProgBtn').onclick=()=>{if(activeProgram)deleteProgram(activeProgram);};
 document.getElementById('endShowBtn').onclick=()=>{
   if(!activeProgram)return;
   document.getElementById('endShowName').textContent=activeProgram.name+(activeProgram.date?' ('+activeProgram.date+')':'');
@@ -1082,10 +1145,17 @@ function renderHistoryPanel(){
     // Fetch actual song count per program for the meta
     info.appendChild(meta);item.appendChild(info);
 
+    const actionsDiv=document.createElement('div');actionsDiv.className='history-item-actions';
     const badge=document.createElement('span');
     badge.className='history-item-badge '+(prog.status==='active'?'badge-active':'badge-ended');
     badge.textContent=prog.status==='active'?'● Active':'🔒 Ended';
-    item.appendChild(badge);
+    actionsDiv.appendChild(badge);
+    // Delete button
+    const delProgBtn=document.createElement('button');
+    delProgBtn.className='btn btn-danger btn-sm';delProgBtn.innerHTML='🗑';delProgBtn.title='Delete program';
+    delProgBtn.onclick=async(e)=>{e.stopPropagation();await deleteProgram(prog);};
+    actionsDiv.appendChild(delProgBtn);
+    item.appendChild(actionsDiv);
 
     item.onclick=async()=>{
       if(prog.status==='active'){
@@ -1199,6 +1269,125 @@ function renderOfflinePanel(){
 }
 
 // ═══════════════════════════════════════════════════════
+// SEARCH & FILTER
+// ═══════════════════════════════════════════════════════
+let searchQuery = '';
+
+document.getElementById('searchInput').addEventListener('input', function(){
+  searchQuery = this.value.trim().toLowerCase();
+  document.getElementById('searchClear').classList.toggle('visible', searchQuery.length > 0);
+  applySearch();
+});
+
+document.getElementById('searchClear').onclick = () => {
+  searchQuery = '';
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchClear').classList.remove('visible');
+  applySearch();
+  document.getElementById('searchInput').focus();
+};
+
+function applySearch(){
+  const rows = document.querySelectorAll('#songBody tr');
+  const countEl = document.getElementById('searchCount');
+  if(!searchQuery){
+    rows.forEach(tr => tr.classList.remove('search-hidden'));
+    // Remove any highlights
+    document.querySelectorAll('.search-highlight').forEach(el => {
+      const parent = el.parentNode;
+      parent.replaceChild(document.createTextNode(el.textContent), el);
+      parent.normalize();
+    });
+    countEl.textContent = '';
+    countEl.classList.remove('active');
+    return;
+  }
+
+  let matched = 0;
+  rows.forEach(tr => {
+    const songId = tr.dataset.id;
+    const song = songs.find(s => s.id === songId);
+    if(!song){ tr.classList.add('search-hidden'); return; }
+
+    const nameMatch = (song.song_name || '').toLowerCase().includes(searchQuery);
+    const singerMatch = (song.singers || []).some(s => s.toLowerCase().includes(searchQuery));
+
+    if(nameMatch || singerMatch){
+      tr.classList.remove('search-hidden');
+      matched++;
+      // Highlight matching text in song name cell
+      highlightCell(tr.cells[2], song.song_name || '', searchQuery);
+      // Highlight matching singer chips
+      highlightSingerChips(tr.cells[3], song.singers || [], searchQuery);
+    } else {
+      tr.classList.add('search-hidden');
+      // Remove any stale highlights on hidden rows
+      clearHighlights(tr.cells[2]);
+      clearHighlights(tr.cells[3]);
+    }
+  });
+
+  countEl.textContent = matched === 0 ? 'No matches' : `${matched} of ${songs.length} song${songs.length!==1?'s':''}`;
+  countEl.classList.toggle('active', matched > 0);
+}
+
+function highlightCell(td, text, query){
+  if(!td) return;
+  // Find the text-bearing span (not the NEW badge)
+  const span = td.querySelector('.cell-text') || td.querySelector('span:not(.new-song-badge)');
+  if(!span) return;
+  clearHighlights(td);
+  const lower = text.toLowerCase();
+  const idx = lower.indexOf(query);
+  if(idx === -1){ span.textContent = text; return; }
+  // Split into before/match/after and wrap match
+  const frag = document.createDocumentFragment();
+  if(idx > 0) frag.appendChild(document.createTextNode(text.slice(0, idx)));
+  const mark = document.createElement('mark');
+  mark.className = 'search-highlight';
+  mark.textContent = text.slice(idx, idx + query.length);
+  frag.appendChild(mark);
+  if(idx + query.length < text.length) frag.appendChild(document.createTextNode(text.slice(idx + query.length)));
+  span.innerHTML = '';
+  span.appendChild(frag);
+}
+
+function highlightSingerChips(td, singers, query){
+  if(!td) return;
+  const chips = td.querySelectorAll('.singer-chip:not(.empty)');
+  chips.forEach((chip, i) => {
+    const name = singers[i] || chip.textContent;
+    const lower = name.toLowerCase();
+    const idx = lower.indexOf(query);
+    if(idx === -1){ chip.textContent = name; return; }
+    chip.innerHTML = '';
+    const frag = document.createDocumentFragment();
+    if(idx > 0) frag.appendChild(document.createTextNode(name.slice(0, idx)));
+    const mark = document.createElement('mark');
+    mark.className = 'search-highlight';
+    mark.textContent = name.slice(idx, idx + query.length);
+    frag.appendChild(mark);
+    if(idx + query.length < name.length) frag.appendChild(document.createTextNode(name.slice(idx + query.length)));
+    chip.appendChild(frag);
+  });
+}
+
+function clearHighlights(td){
+  if(!td) return;
+  td.querySelectorAll('.search-highlight').forEach(el => {
+    const parent = el.parentNode;
+    if(parent){ parent.replaceChild(document.createTextNode(el.textContent), el); parent.normalize(); }
+  });
+}
+
+// Re-apply search after table re-render
+const _origRenderTable = renderTable;
+renderTable = function(){
+  _origRenderTable();
+  if(searchQuery) setTimeout(applySearch, 0);
+};
+
+// ═══════════════════════════════════════════════════════
 // DRAG & DROP
 // ═══════════════════════════════════════════════════════
 function onDragStart(e){dragSrc=this;this.classList.add('dragging');e.dataTransfer.effectAllowed='move';}
@@ -1237,6 +1426,50 @@ function setupTouchDrag(tr){
       renderTable();savePositions();showToast('Order updated 🎶','success');
     }
   });
+}
+
+// ═══════════════════════════════════════════════════════
+// DELETE PROGRAM
+// ═══════════════════════════════════════════════════════
+async function deleteProgram(prog){
+  const isActive=prog.status==='active';
+  const activeCount=programs.filter(p=>p.status==='active').length;
+  if(isActive&&activeCount<=1){
+    showToast('Cannot delete the only active program. End it first or create another.','error');
+    return;
+  }
+  const confirmed=confirm(`Delete "${prog.name}"?
+
+This will permanently delete the program AND all its ${isActive?'songs':'songs'} from history. This cannot be undone.`);
+  if(!confirmed)return;
+  try{
+    // Songs cascade-delete via FK, but let's be explicit
+    await sb.from(SONGS_TABLE).delete().eq('program_id',prog.id);
+    const{error}=await sb.from(PROGRAMS_TABLE).delete().eq('id',prog.id);
+    if(error)throw error;
+    programs=programs.filter(p=>p.id!==prog.id);
+    // If we just deleted the active program we were on, switch to next active
+    if(activeProgram&&activeProgram.id===prog.id){
+      activeProgram=programs.find(p=>p.status==='active')||null;
+      if(!activeProgram){
+        // Create a fresh one if none left
+        activeProgram=await createProgram('New Show','');
+        programs.unshift(activeProgram);
+      }
+      viewingProgram=null;
+      await loadSongsForProgram(activeProgram.id);
+      applyProgramUI(activeProgram,false);
+      updateSwitcher();
+    } else if(viewingProgram&&viewingProgram.id===prog.id){
+      // Was viewing this deleted history item — go back to active
+      viewingProgram=null;
+      await loadSongsForProgram(activeProgram.id);
+      applyProgramUI(activeProgram,false);
+    }
+    showToast(`"${prog.name}" deleted`,'success');
+    // Re-render history panel if open
+    if(historyPanelOpen)renderHistoryPanel();
+  }catch(e){showToast('Delete failed: '+e.message,'error');}
 }
 
 // ═══════════════════════════════════════════════════════
