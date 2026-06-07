@@ -326,23 +326,6 @@ tbody td:last-child{border-radius:0 var(--radius) var(--radius) 0;border-right:1
 .lang-ml{background:rgba(255,213,79,.15);color:#FFD54F;border-color:rgba(255,213,79,.3);}
 .lang-{background:var(--surface2);color:var(--text-dim);border-color:var(--border);}
 
-/* LANGUAGE STATS BAR */
-.lang-stats{display:flex;align-items:center;gap:5px;flex-wrap:wrap;flex:1;min-width:0;}
-.lang-stat-pill{display:inline-flex;align-items:center;gap:4px;border-radius:20px;
-  padding:3px 9px;font-size:clamp(.62rem,2.3vw,.72rem);font-weight:700;white-space:nowrap;
-  border:1px solid transparent;cursor:default;transition:transform .12s,opacity .15s;}
-.lang-stat-pill:hover{transform:scale(1.07);}
-.lang-stat-pill .pill-count{font-size:clamp(.68rem,2.5vw,.78rem);opacity:.9;}
-/* reuse existing lang-* colour tokens */
-.lang-stat-pill.lang-te{background:rgba(255,165,0,.15);color:#FFB347;border-color:rgba(255,165,0,.3);}
-.lang-stat-pill.lang-hi{background:rgba(255,107,107,.15);color:#FF8A80;border-color:rgba(255,107,107,.3);}
-.lang-stat-pill.lang-en{background:rgba(74,222,128,.15);color:#69F0AE;border-color:rgba(74,222,128,.3);}
-.lang-stat-pill.lang-ta{background:rgba(0,206,209,.15);color:#80DEEA;border-color:rgba(0,206,209,.3);}
-.lang-stat-pill.lang-kn{background:rgba(186,104,200,.15);color:#CE93D8;border-color:rgba(186,104,200,.3);}
-.lang-stat-pill.lang-ml{background:rgba(255,213,79,.15);color:#FFD54F;border-color:rgba(255,213,79,.3);}
-.lang-stat-pill.lang-{background:var(--surface2);color:var(--text-dim);border-color:var(--border);}
-.lang-stats-empty{font-size:.72rem;color:var(--text-dim);}
-
 /* SEARCH BAR */
 .search-wrap{padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--border);
   display:flex;align-items:center;gap:8px;}
@@ -425,10 +408,9 @@ tbody tr.search-hidden{display:none;}
 
 <div class="search-wrap" id="searchWrap">
   <div class="search-input-wrap">
-    <input class="search-input" id="searchInput" placeholder="🔍 Search song, singer or language…" autocomplete="off" type="search">
+    <input class="search-input" id="searchInput" placeholder="🔍 Search song or singer…" autocomplete="off" type="search">
     <button class="search-clear" id="searchClear" title="Clear search">✕</button>
   </div>
-  <div class="lang-stats" id="langStats"></div>
   <span class="search-count" id="searchCount"></span>
 </div>
 
@@ -861,50 +843,9 @@ function renderTable(){
     }
     tbody.appendChild(tr);
   });
-  updateLangStats();
 }
 
-// ── Language stats bar ──
-function updateLangStats(){
-  const el=document.getElementById('langStats');
-  if(!el)return;
-  el.innerHTML='';
-  if(!songs.length){el.innerHTML='<span class="lang-stats-empty">No songs yet</span>';return;}
-
-  // Count songs per language
-  const counts={};
-  songs.forEach(s=>{
-    const k=s.language||'';
-    counts[k]=(counts[k]||0)+1;
-  });
-
-  // Render in LANGUAGES order, skip empty-key if 0
-  let anyShown=false;
-  LANGUAGES.forEach(lang=>{
-    const n=counts[lang.value];
-    if(!n)return;                    // skip languages with 0 songs
-    if(!lang.value&&n===songs.length)return; // skip "unset" if ALL songs have no language
-    const pill=document.createElement('span');
-    pill.className='lang-stat-pill '+(lang.cls||'lang-');
-    const name=lang.value||'No language';
-    pill.title=`${name}: ${n} song${n!==1?'s':''}`;
-    pill.innerHTML=`${name} <span class="pill-count">${n}</span>`;
-    el.appendChild(pill);
-    anyShown=true;
-  });
-
-  // If some songs have no language set, show a grey pill
-  const unset=counts['']||0;
-  if(unset>0&&unset<songs.length){
-    const pill=document.createElement('span');
-    pill.className='lang-stat-pill lang-';
-    pill.title=`${unset} song${unset!==1?'s':''} with no language set`;
-    pill.innerHTML=`❔ <span class="pill-count">${unset}</span>`;
-    el.appendChild(pill);
-  }
-
-  if(!anyShown&&!unset){el.innerHTML='<span class="lang-stats-empty">No songs yet</span>';}
-}
+// ── Editable cell ──
 function makeEditableCell(song,field,displayText){
   const span=document.createElement('span');span.className='cell-text';span.textContent=displayText;
   span.title='Tap to edit';span.onclick=()=>startInlineEdit(song,field,span);return span;
@@ -948,7 +889,6 @@ function makeLangSelect(song){
     const def=LANGUAGES.find(l=>l.value===val)||LANGUAGES[0];
     sel.className='lang-select '+(def.cls||'lang-');
     song.language=val;
-    updateLangStats();
     await updateSong(song.id,{language:val});
     showToast('Language updated','success');
   };
@@ -1442,26 +1382,21 @@ function applySearch(){
     const song = songs.find(s => s.id === songId);
     if(!song){ tr.classList.add('search-hidden'); return; }
 
-    const nameMatch   = (song.song_name || '').toLowerCase().includes(searchQuery);
+    const nameMatch = (song.song_name || '').toLowerCase().includes(searchQuery);
     const singerMatch = (song.singers || []).some(s => s.toLowerCase().includes(searchQuery));
-    const langMatch   = (song.language || '').toLowerCase().includes(searchQuery);
 
-    if(nameMatch || singerMatch || langMatch){
+    if(nameMatch || singerMatch){
       tr.classList.remove('search-hidden');
       matched++;
       // Highlight matching text in song name cell
       highlightCell(tr.cells[2], song.song_name || '', searchQuery);
-      // Highlight language cell (td index 3)
-      if(langMatch) highlightLangCell(tr.cells[3], song.language || '', searchQuery);
-      else clearHighlights(tr.cells[3]);
-      // Highlight matching singer chips (td index 4)
-      highlightSingerChips(tr.cells[4], song.singers || [], searchQuery);
+      // Highlight matching singer chips
+      highlightSingerChips(tr.cells[3], song.singers || [], searchQuery);
     } else {
       tr.classList.add('search-hidden');
       // Remove any stale highlights on hidden rows
       clearHighlights(tr.cells[2]);
       clearHighlights(tr.cells[3]);
-      clearHighlights(tr.cells[4]);
     }
   });
 
@@ -1490,27 +1425,7 @@ function highlightCell(td, text, query){
   span.appendChild(frag);
 }
 
-function highlightLangCell(td, text, query){
-  if(!td) return;
-  // In read-only mode the cell has a .lang-badge span; in edit mode a <select> — skip select
-  const badge = td.querySelector('.lang-badge');
-  if(!badge) return; // editable select — can't highlight inside it, skip
-  clearHighlights(td);
-  const lower = text.toLowerCase();
-  const idx = lower.indexOf(query);
-  if(idx === -1){ badge.textContent = text||'—'; return; }
-  const frag = document.createDocumentFragment();
-  if(idx > 0) frag.appendChild(document.createTextNode(text.slice(0, idx)));
-  const mark = document.createElement('mark');
-  mark.className = 'search-highlight';
-  mark.textContent = text.slice(idx, idx + query.length);
-  frag.appendChild(mark);
-  if(idx + query.length < text.length) frag.appendChild(document.createTextNode(text.slice(idx + query.length)));
-  badge.innerHTML = '';
-  badge.appendChild(frag);
-}
-
-
+function highlightSingerChips(td, singers, query){
   if(!td) return;
   const chips = td.querySelectorAll('.singer-chip:not(.empty)');
   chips.forEach((chip, i) => {
