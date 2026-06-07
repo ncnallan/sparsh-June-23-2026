@@ -425,7 +425,7 @@ tbody tr.search-hidden{display:none;}
 
 <div class="search-wrap" id="searchWrap">
   <div class="search-input-wrap">
-    <input class="search-input" id="searchInput" placeholder="🔍 Search song, singer or language…" autocomplete="off" type="search">
+    <input class="search-input" id="searchInput" placeholder="🔍 Search song or singer…" autocomplete="off" type="search">
     <button class="search-clear" id="searchClear" title="Clear search">✕</button>
   </div>
   <div class="lang-stats" id="langStats"></div>
@@ -861,7 +861,6 @@ function renderTable(){
     }
     tbody.appendChild(tr);
   });
-  updateLangStats();
 }
 
 // ── Language stats bar ──
@@ -1442,26 +1441,21 @@ function applySearch(){
     const song = songs.find(s => s.id === songId);
     if(!song){ tr.classList.add('search-hidden'); return; }
 
-    const nameMatch   = (song.song_name || '').toLowerCase().includes(searchQuery);
+    const nameMatch = (song.song_name || '').toLowerCase().includes(searchQuery);
     const singerMatch = (song.singers || []).some(s => s.toLowerCase().includes(searchQuery));
-    const langMatch   = (song.language || '').toLowerCase().includes(searchQuery);
 
-    if(nameMatch || singerMatch || langMatch){
+    if(nameMatch || singerMatch){
       tr.classList.remove('search-hidden');
       matched++;
       // Highlight matching text in song name cell
       highlightCell(tr.cells[2], song.song_name || '', searchQuery);
-      // Highlight language cell (td index 3)
-      if(langMatch) highlightLangCell(tr.cells[3], song.language || '', searchQuery);
-      else clearHighlights(tr.cells[3]);
-      // Highlight matching singer chips (td index 4)
-      highlightSingerChips(tr.cells[4], song.singers || [], searchQuery);
+      // Highlight matching singer chips
+      highlightSingerChips(tr.cells[3], song.singers || [], searchQuery);
     } else {
       tr.classList.add('search-hidden');
       // Remove any stale highlights on hidden rows
       clearHighlights(tr.cells[2]);
       clearHighlights(tr.cells[3]);
-      clearHighlights(tr.cells[4]);
     }
   });
 
@@ -1490,27 +1484,7 @@ function highlightCell(td, text, query){
   span.appendChild(frag);
 }
 
-function highlightLangCell(td, text, query){
-  if(!td) return;
-  // In read-only mode the cell has a .lang-badge span; in edit mode a <select> — skip select
-  const badge = td.querySelector('.lang-badge');
-  if(!badge) return; // editable select — can't highlight inside it, skip
-  clearHighlights(td);
-  const lower = text.toLowerCase();
-  const idx = lower.indexOf(query);
-  if(idx === -1){ badge.textContent = text||'—'; return; }
-  const frag = document.createDocumentFragment();
-  if(idx > 0) frag.appendChild(document.createTextNode(text.slice(0, idx)));
-  const mark = document.createElement('mark');
-  mark.className = 'search-highlight';
-  mark.textContent = text.slice(idx, idx + query.length);
-  frag.appendChild(mark);
-  if(idx + query.length < text.length) frag.appendChild(document.createTextNode(text.slice(idx + query.length)));
-  badge.innerHTML = '';
-  badge.appendChild(frag);
-}
-
-
+function highlightSingerChips(td, singers, query){
   if(!td) return;
   const chips = td.querySelectorAll('.singer-chip:not(.empty)');
   chips.forEach((chip, i) => {
