@@ -309,6 +309,23 @@ tbody td:last-child{border-radius:0 var(--radius) var(--radius) 0;border-right:1
 /* DELETE PROGRAM */
 .history-item-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
 
+/* LANGUAGE BADGE */
+.lang-select{background:var(--surface2);border:1.5px solid var(--border);color:var(--text);
+  border-radius:20px;padding:3px 8px 3px 6px;font-family:'Poppins',sans-serif;
+  font-size:clamp(.65rem,2.5vw,.75rem);font-weight:600;cursor:pointer;outline:none;
+  appearance:none;-webkit-appearance:none;transition:border-color .15s;min-width:80px;}
+.lang-select:focus{border-color:var(--gold);}
+.lang-badge{display:inline-block;border-radius:20px;padding:3px 10px;
+  font-size:clamp(.65rem,2.5vw,.75rem);font-weight:600;white-space:nowrap;
+  border:1px solid transparent;}
+.lang-te{background:rgba(255,165,0,.15);color:#FFB347;border-color:rgba(255,165,0,.3);}
+.lang-hi{background:rgba(255,107,107,.15);color:#FF8A80;border-color:rgba(255,107,107,.3);}
+.lang-en{background:rgba(74,222,128,.15);color:#69F0AE;border-color:rgba(74,222,128,.3);}
+.lang-ta{background:rgba(0,206,209,.15);color:#80DEEA;border-color:rgba(0,206,209,.3);}
+.lang-kn{background:rgba(186,104,200,.15);color:#CE93D8;border-color:rgba(186,104,200,.3);}
+.lang-ml{background:rgba(255,213,79,.15);color:#FFD54F;border-color:rgba(255,213,79,.3);}
+.lang-{background:var(--surface2);color:var(--text-dim);border-color:var(--border);}
+
 /* SEARCH BAR */
 .search-wrap{padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--border);
   display:flex;align-items:center;gap:8px;}
@@ -408,7 +425,7 @@ tbody tr.search-hidden{display:none;}
   </div>
   <table id="songTable" style="display:none;">
     <thead><tr>
-      <th></th><th>#</th><th>Song Name</th><th>Singer(s)</th><th>Karaoke</th><th id="actionsHeader">Actions</th>
+      <th></th><th>#</th><th>Song Name</th><th>Language</th><th>Singer(s)</th><th>Karaoke</th><th id="actionsHeader">Actions</th>
     </tr></thead>
     <tbody id="songBody"></tbody>
   </table>
@@ -524,12 +541,25 @@ tbody tr.search-hidden{display:none;}
 // ═══════════════════════════════════════════════════════
 // CONFIG
 // ═══════════════════════════════════════════════════════
+// ⚠️  RUN THIS IN SUPABASE SQL EDITOR ONCE:
+//   alter table songs add column if not exists language text not null default '';
+// ═══════════════════════════════════════════════════════
 const SUPABASE_URL  = 'https://afnxggkjsxezrbhnntwl.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_YenvzolmYET7XAJF_4M9Ag_yJH2AdRG';
 const SONGS_TABLE    = 'songs';
 const PROGRAMS_TABLE = 'programs';
 
 const COUSINS = ['Ravi','Soujanya','Soumya','Sravan','Saradhi','Harini','Ananya','Maanya'];
+
+const LANGUAGES = [
+  {value:'',     label:'— Language —', cls:'lang-'},
+  {value:'Telugu',   label:'🟠 Telugu',   cls:'lang-te'},
+  {value:'Hindi',    label:'🔴 Hindi',    cls:'lang-hi'},
+  {value:'English',  label:'🟢 English',  cls:'lang-en'},
+  {value:'Tamil',    label:'🔵 Tamil',    cls:'lang-ta'},
+  {value:'Kannada',  label:'🟣 Kannada',  cls:'lang-kn'},
+  {value:'Malayalam',label:'🟡 Malayalam',cls:'lang-ml'},
+];
 
 // ═══════════════════════════════════════════════════════
 // STATE
@@ -649,7 +679,9 @@ async function insertSong(song){
   // Insert new song with is_new:true
   const{data,error}=await sb.from(SONGS_TABLE).insert([{
     song_name:song.song_name,singers:song.singers,
-    karaoke_link:song.karaoke_link,position:pos,
+    karaoke_link:song.karaoke_link,
+    language:song.language||'',
+    position:pos,
     program_id:activeProgram.id,
     is_new:true
   }]).select().single();
@@ -771,7 +803,19 @@ function renderTable(){
       tdS.appendChild(nameWrap);
     }
     tr.appendChild(tdS);
-    // Singers
+    // Language
+    const tdLang=document.createElement('td');
+    if(isReadOnly){
+      const lang=song.language||'';
+      const langDef=LANGUAGES.find(l=>l.value===lang)||LANGUAGES[0];
+      const badge=document.createElement('span');
+      badge.className='lang-badge '+(langDef.cls||'lang-');
+      badge.textContent=lang||'—';
+      tdLang.appendChild(badge);
+    } else {
+      tdLang.appendChild(makeLangSelect(song));
+    }
+    tr.appendChild(tdLang);
     const tdSi=document.createElement('td');
     if(isReadOnly){
       const div=document.createElement('div');div.className='singers-display';
@@ -827,7 +871,31 @@ async function finishEdit(save){
   } else {span.textContent=song[field]||'—';input.parentNode.replaceChild(span,input);}
 }
 
-// ── Singers cell ──
+// ── Language select cell ──
+function makeLangSelect(song){
+  const sel=document.createElement('select');
+  sel.className='lang-select';
+  const curLang=song.language||'';
+  const curDef=LANGUAGES.find(l=>l.value===curLang)||LANGUAGES[0];
+  sel.className='lang-select '+(curDef.cls||'lang-');
+  LANGUAGES.forEach(l=>{
+    const opt=document.createElement('option');
+    opt.value=l.value;opt.textContent=l.label;
+    if(l.value===curLang)opt.selected=true;
+    sel.appendChild(opt);
+  });
+  sel.onchange=async()=>{
+    const val=sel.value;
+    const def=LANGUAGES.find(l=>l.value===val)||LANGUAGES[0];
+    sel.className='lang-select '+(def.cls||'lang-');
+    song.language=val;
+    await updateSong(song.id,{language:val});
+    showToast('Language updated','success');
+  };
+  return sel;
+}
+
+
 function makeSingersCell(song){
   const singers=song.singers||[];
   const div=document.createElement('div');div.className='singers-display';div.title='Tap to change singers';
@@ -1023,7 +1091,9 @@ document.getElementById('newShowConfirmBtn').onclick=async()=>{
       // Copy songs from the previous show
       const copies=songs.map((s,i)=>({
         song_name:s.song_name,singers:s.singers,
-        karaoke_link:s.karaoke_link,position:i+1,
+        karaoke_link:s.karaoke_link,
+        language:s.language||'',
+        position:i+1,
         program_id:newProg.id
       }));
       const{data:newSongs,error:se}=await sb.from(SONGS_TABLE).insert(copies).select();
@@ -1202,8 +1272,11 @@ function toggleAddForm(){
   container.style.display='block';
   container.innerHTML=`<div class="add-form"><h3>✨ New Song</h3><div class="form-grid">
     <div class="form-group full"><label>Song Name *</label><input class="form-input" id="fSongName" placeholder="Enter song name…" autocomplete="off"></div>
+    <div class="form-group"><label>Language</label><select class="form-input" id="fLanguage" style="cursor:pointer;">
+      ${LANGUAGES.map(l=>`<option value="${l.value}">${l.label}</option>`).join('')}
+    </select></div>
+    <div class="form-group"><label>Karaoke Link (optional)</label><input class="form-input" id="fLink" placeholder="Google Drive or YouTube link…" autocomplete="off"></div>
     <div class="form-group full"><label>Singers (tap to select)</label><div class="form-singers" id="fSingers"></div></div>
-    <div class="form-group full"><label>Karaoke Link (optional)</label><input class="form-input" id="fLink" placeholder="Google Drive or YouTube link…" autocomplete="off"></div>
   </div><div class="form-actions"><button class="btn btn-secondary" id="cancelAddBtn">Cancel</button><button class="btn btn-primary" id="saveAddBtn">💾 Save Song</button></div></div>`;
   const sd=document.getElementById('fSingers');
   COUSINS.forEach(name=>{
@@ -1216,7 +1289,7 @@ function toggleAddForm(){
     const n=document.getElementById('fSongName').value.trim();
     if(!n){showToast('Please enter a song name','error');return;}
     const btn=document.getElementById('saveAddBtn');btn.disabled=true;btn.textContent='Saving…';
-    try{await insertSong({song_name:n,singers:selectedSingers,karaoke_link:document.getElementById('fLink').value.trim()});toggleAddForm();}
+    try{await insertSong({song_name:n,singers:selectedSingers,karaoke_link:document.getElementById('fLink').value.trim(),language:document.getElementById('fLanguage').value});toggleAddForm();}
     catch(e){showToast('Error: '+e.message,'error');btn.disabled=false;btn.textContent='💾 Save Song';}
   };
   document.getElementById('fSongName').focus();
@@ -1478,9 +1551,9 @@ This will permanently delete the program AND all its ${isActive?'songs':'songs'}
 document.getElementById('exportBtn').onclick=()=>{
   if(!songs.length){showToast('No songs to export','error');return;}
   const prog=viewingProgram||activeProgram;
-  const rows=songs.map((s,i)=>({'#':i+1,'Song Name':s.song_name||'','Singer(s)':Array.isArray(s.singers)?s.singers.join(', '):'',' Karaoke Link':s.karaoke_link||'','Offline File':offlineFileMap[s.id]?offlineFileMap[s.id].fileName:''}));
+  const rows=songs.map((s,i)=>({'#':i+1,'Song Name':s.song_name||'','Language':s.language||'','Singer(s)':Array.isArray(s.singers)?s.singers.join(', '):'',' Karaoke Link':s.karaoke_link||'','Offline File':offlineFileMap[s.id]?offlineFileMap[s.id].fileName:''}));
   const wb=XLSX.utils.book_new();const ws=XLSX.utils.json_to_sheet(rows);
-  ws['!cols']=[{wch:5},{wch:35},{wch:40},{wch:55},{wch:30}];
+  ws['!cols']=[{wch:5},{wch:35},{wch:14},{wch:40},{wch:55},{wch:30}];
   XLSX.utils.book_append_sheet(wb,ws,'Setlist');
   const fn=((prog?prog.name+' '+(prog.date||''):'Setlist')).replace(/[^a-zA-Z0-9 _-]/g,'').trim().replace(/\s+/g,'_');
   XLSX.writeFile(wb,(fn||'Setlist')+'.xlsx');
@@ -1511,12 +1584,12 @@ document.getElementById('excelInput').onchange=e=>{
 function guessCol(cols,hints){for(const h of hints){const i=cols.findIndex(c=>c.toLowerCase().includes(h.toLowerCase()));if(i!==-1)return i;}return -1;}
 function showImportModal(){
   const body=document.getElementById('importModalBody');body.innerHTML='';
-  let gN=guessCol(importColumns,['song','name','title','track']);let gS=guessCol(importColumns,['singer','artist','performer']);let gL=guessCol(importColumns,['karaoke','link','url','drive','youtube']);
+  let gN=guessCol(importColumns,['song','name','title','track']);let gS=guessCol(importColumns,['singer','artist','performer']);let gL=guessCol(importColumns,['karaoke','link','url','drive','youtube']);let gLang=guessCol(importColumns,['language','lang']);
   if(gN===-1)gN=0;if(gS===-1)gS=importColumns.length>1?1:-1;if(gL===-1)gL=importColumns.length>2?2:-1;
   const inst=document.createElement('p');inst.className='import-instructions';
   inst.innerHTML=`Found <b style="color:var(--gold)">${importRows.length} rows</b>. Map columns below then choose how to import.`;body.appendChild(inst);
   const mapDiv=document.createElement('div');mapDiv.className='import-col-map';
-  [{id:'mapName',label:'Song Name *',guess:gN},{id:'mapSinger',label:'Singer(s)',guess:gS},{id:'mapLink',label:'Karaoke Link',guess:gL}].forEach(f=>{
+  [{id:'mapName',label:'Song Name *',guess:gN},{id:'mapSinger',label:'Singer(s)',guess:gS},{id:'mapLink',label:'Karaoke Link',guess:gL},{id:'mapLang',label:'Language',guess:gLang}].forEach(f=>{
     const grp=document.createElement('div');const lbl=document.createElement('label');lbl.textContent=f.label;
     const sel=document.createElement('select');sel.id=f.id;
     const skip=document.createElement('option');skip.value='-1';skip.textContent='— skip —';sel.appendChild(skip);
@@ -1541,10 +1614,11 @@ function updateImportPreview(){
   const nI=parseInt(document.getElementById('mapName')?.value??-1);
   const sI=parseInt(document.getElementById('mapSinger')?.value??-1);
   const lI=parseInt(document.getElementById('mapLink')?.value??-1);
+  const lgI=parseInt(document.getElementById('mapLang')?.value??-1);
   const table=document.getElementById('importPreviewTable');if(!table)return;table.innerHTML='';
-  const thead=table.createTHead();const hr=thead.insertRow();['Song Name','Singer(s)','Karaoke Link'].forEach(h=>{const th=document.createElement('th');th.textContent=h;hr.appendChild(th);});
+  const thead=table.createTHead();const hr=thead.insertRow();['Song Name','Singer(s)','Language','Karaoke Link'].forEach(h=>{const th=document.createElement('th');th.textContent=h;hr.appendChild(th);});
   const tbody=table.createTBody();importRows.slice(0,6).forEach(row=>{
-    const tr=tbody.insertRow();[nI>=0?String(row[nI]||'').trim():'—',sI>=0?String(row[sI]||'').trim():'—',lI>=0?String(row[lI]||'').trim():'—'].forEach(v=>{const td=tr.insertCell();td.textContent=v||'—';});
+    const tr=tbody.insertRow();[nI>=0?String(row[nI]||'').trim():'—',sI>=0?String(row[sI]||'').trim():'—',lgI>=0?String(row[lgI]||'').trim():'—',lI>=0?String(row[lI]||'').trim():'—'].forEach(v=>{const td=tr.insertCell();td.textContent=v||'—';});
   });
   const valid=importRows.filter(r=>nI>=0&&String(r[nI]||'').trim()!=='').length;
   const s=document.getElementById('importSummary');if(s)s.innerHTML=`Preview (first ${Math.min(6,importRows.length)} of ${importRows.length}) · <b>${valid} valid songs</b> will be imported`;
@@ -1553,17 +1627,21 @@ async function executeImport(){
   const nI=parseInt(document.getElementById('mapName')?.value??-1);
   const sI=parseInt(document.getElementById('mapSinger')?.value??-1);
   const lI=parseInt(document.getElementById('mapLink')?.value??-1);
+  const lgI=parseInt(document.getElementById('mapLang')?.value??-1);
   if(nI<0){showToast('Please map the Song Name column','error');return;}
-  const toImport=importRows.map(row=>({song_name:String(row[nI]||'').trim(),singers_raw:sI>=0?String(row[sI]||'').trim():'',karaoke_link:lI>=0?String(row[lI]||'').trim():''})).filter(r=>r.song_name!=='');
+  // Normalise language value to match our list
+  const validLangs=LANGUAGES.map(l=>l.value.toLowerCase()).filter(Boolean);
+  const normLang=raw=>{const r=String(raw||'').trim();const match=LANGUAGES.find(l=>l.value.toLowerCase()===r.toLowerCase());return match?match.value:'';};
+  const toImport=importRows.map(row=>({song_name:String(row[nI]||'').trim(),singers_raw:sI>=0?String(row[sI]||'').trim():'',karaoke_link:lI>=0?String(row[lI]||'').trim():'',language:lgI>=0?normLang(row[lgI]):''})).filter(r=>r.song_name!=='');
   if(!toImport.length){showToast('No valid songs found','error');return;}
   const btn=document.getElementById('importConfirmBtn');btn.disabled=true;btn.textContent='Importing…';
   try{
-    const parsed=toImport.map(r=>({song_name:r.song_name,singers:r.singers_raw?r.singers_raw.split(/[,;&/]+/).map(s=>s.trim()).filter(Boolean).map(s=>COUSINS.find(c=>c.toLowerCase()===s.toLowerCase())||s):[],karaoke_link:r.karaoke_link}));
+    const parsed=toImport.map(r=>({song_name:r.song_name,singers:r.singers_raw?r.singers_raw.split(/[,;&/]+/).map(s=>s.trim()).filter(Boolean).map(s=>COUSINS.find(c=>c.toLowerCase()===s.toLowerCase())||s):[],karaoke_link:r.karaoke_link,language:r.language}));
     if(importMode==='replace'){
       if(songs.length){const{error}=await sb.from(SONGS_TABLE).delete().in('id',songs.map(s=>s.id));if(error)throw error;for(const s of songs){try{await idbDel(s.id);delete offlineFileMap[s.id];}catch(e){}}songs=[];}
     }
     let pos=songs.length?Math.max(...songs.map(s=>s.position||0))+1:1;
-    const inserts=parsed.map((r,i)=>({song_name:r.song_name,singers:r.singers,karaoke_link:r.karaoke_link,position:pos+i,program_id:activeProgram.id}));
+    const inserts=parsed.map((r,i)=>({song_name:r.song_name,singers:r.singers,karaoke_link:r.karaoke_link,language:r.language||'',position:pos+i,program_id:activeProgram.id}));
     const{data,error}=await sb.from(SONGS_TABLE).insert(inserts).select();if(error)throw error;
     songs=importMode==='replace'?data:[...songs,...data];songs.sort((a,b)=>(a.position||0)-(b.position||0));
     renderTable();setStatus(`${songs.length} songs`,'ok');
