@@ -425,7 +425,7 @@ tbody tr.search-hidden{display:none;}
 
 <div class="search-wrap" id="searchWrap">
   <div class="search-input-wrap">
-    <input class="search-input" id="searchInput" placeholder="🔍 Search song or singer…" autocomplete="off" type="search">
+    <input class="search-input" id="searchInput" placeholder="🔍 Search song, singer or language…" autocomplete="off" type="search">
     <button class="search-clear" id="searchClear" title="Clear search">✕</button>
   </div>
   <div class="lang-stats" id="langStats"></div>
@@ -1442,21 +1442,25 @@ function applySearch(){
     const song = songs.find(s => s.id === songId);
     if(!song){ tr.classList.add('search-hidden'); return; }
 
-    const nameMatch = (song.song_name || '').toLowerCase().includes(searchQuery);
+    const nameMatch   = (song.song_name || '').toLowerCase().includes(searchQuery);
     const singerMatch = (song.singers || []).some(s => s.toLowerCase().includes(searchQuery));
+    const langMatch   = (song.language || '').toLowerCase().includes(searchQuery);
 
-    if(nameMatch || singerMatch){
+    if(nameMatch || singerMatch || langMatch){
       tr.classList.remove('search-hidden');
       matched++;
-      // Highlight matching text in song name cell
-      highlightCell(tr.cells[2], song.song_name || '', searchQuery);
-      // Highlight matching singer chips
-      highlightSingerChips(tr.cells[3], song.singers || [], searchQuery);
+      // Only highlight the cell that actually matched — clear others
+      if(nameMatch) highlightCell(tr.cells[2], song.song_name || '', searchQuery);
+      else clearHighlights(tr.cells[2]);
+      if(langMatch) highlightLangCell(tr.cells[3], song.language || '', searchQuery);
+      else clearHighlights(tr.cells[3]);
+      if(singerMatch) highlightSingerChips(tr.cells[4], song.singers || [], searchQuery);
+      else clearHighlights(tr.cells[4]);
     } else {
       tr.classList.add('search-hidden');
-      // Remove any stale highlights on hidden rows
       clearHighlights(tr.cells[2]);
       clearHighlights(tr.cells[3]);
+      clearHighlights(tr.cells[4]);
     }
   });
 
@@ -1466,14 +1470,13 @@ function applySearch(){
 
 function highlightCell(td, text, query){
   if(!td) return;
-  // Find the text-bearing span (not the NEW badge)
-  const span = td.querySelector('.cell-text') || td.querySelector('span:not(.new-song-badge)');
+  // Strictly target the editable .cell-text span; fall back to .lang-badge; otherwise bail
+  const span = td.querySelector('.cell-text') || td.querySelector('.lang-badge');
   if(!span) return;
   clearHighlights(td);
   const lower = text.toLowerCase();
   const idx = lower.indexOf(query);
   if(idx === -1){ span.textContent = text; return; }
-  // Split into before/match/after and wrap match
   const frag = document.createDocumentFragment();
   if(idx > 0) frag.appendChild(document.createTextNode(text.slice(0, idx)));
   const mark = document.createElement('mark');
@@ -1483,6 +1486,26 @@ function highlightCell(td, text, query){
   if(idx + query.length < text.length) frag.appendChild(document.createTextNode(text.slice(idx + query.length)));
   span.innerHTML = '';
   span.appendChild(frag);
+}
+
+function highlightLangCell(td, text, query){
+  if(!td) return;
+  // In read-only mode the cell has a .lang-badge span; in edit mode a <select> — skip select
+  const badge = td.querySelector('.lang-badge');
+  if(!badge) return; // editable select — can't highlight inside it, skip
+  clearHighlights(td);
+  const lower = text.toLowerCase();
+  const idx = lower.indexOf(query);
+  if(idx === -1){ badge.textContent = text||'—'; return; }
+  const frag = document.createDocumentFragment();
+  if(idx > 0) frag.appendChild(document.createTextNode(text.slice(0, idx)));
+  const mark = document.createElement('mark');
+  mark.className = 'search-highlight';
+  mark.textContent = text.slice(idx, idx + query.length);
+  frag.appendChild(mark);
+  if(idx + query.length < text.length) frag.appendChild(document.createTextNode(text.slice(idx + query.length)));
+  badge.innerHTML = '';
+  badge.appendChild(frag);
 }
 
 function highlightSingerChips(td, singers, query){
