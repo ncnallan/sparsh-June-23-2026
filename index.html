@@ -366,6 +366,37 @@ tbody td:last-child{border-radius:0 var(--radius) var(--radius) 0;border-right:1
 tbody tr.search-hidden{display:none;}
 
 @media(max-width:480px){.link-cell .cell-text{max-width:60px;}}
+
+/* IMPORT SONG PICKER (New Show modal) */
+.import-song-item{display:flex;align-items:center;gap:10px;padding:7px 12px;
+  cursor:pointer;transition:background .12s;border-bottom:1px solid rgba(255,255,255,.04);}
+.import-song-item:last-child{border-bottom:none;}
+.import-song-item:hover{background:rgba(123,92,240,.15);}
+.import-song-item input[type=checkbox]{width:16px;height:16px;accent-color:var(--gold);cursor:pointer;flex-shrink:0;}
+.import-song-item-info{flex:1;min-width:0;}
+.import-song-item-name{font-size:.85rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.import-song-item-meta{font-size:.7rem;color:var(--text-dim);margin-top:1px;}
+
+/* COMPLETED SONGS */
+tbody tr.song-done{opacity:.52;}
+.song-done-name{text-decoration:line-through;text-decoration-color:rgba(74,222,128,.55);color:var(--text-dim);}
+.btn-done{background:rgba(255,255,255,.05);border:1.5px solid rgba(255,255,255,.14);
+  color:var(--text-dim);border-radius:8px;padding:4px 8px;font-size:.8rem;cursor:pointer;
+  font-family:'Poppins',sans-serif;font-weight:600;transition:all .18s;white-space:nowrap;
+  display:inline-flex;align-items:center;gap:4px;}
+.btn-done:hover{background:rgba(74,222,128,.12);border-color:rgba(74,222,128,.4);color:var(--green);}
+.btn-done.done{background:rgba(74,222,128,.15);border-color:rgba(74,222,128,.5);color:var(--green);}
+.btn-done.done:hover{background:rgba(255,107,107,.1);border-color:rgba(255,107,107,.4);color:var(--rose);}
+
+/* PROGRESS BAR */
+.progress-bar-wrap{padding:0 12px 7px;background:var(--surface);border-bottom:1px solid var(--border);
+  display:none;align-items:center;gap:10px;}
+.progress-bar-wrap.visible{display:flex;}
+.progress-track{flex:1;height:6px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden;}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--green),#22d3ee);
+  border-radius:3px;transition:width .4s cubic-bezier(.22,1,.36,1);}
+.progress-label{font-size:.72rem;color:var(--text-dim);white-space:nowrap;flex-shrink:0;}
+.progress-label b{color:var(--green);}
 </style>
 </head>
 <body>
@@ -411,7 +442,8 @@ tbody tr.search-hidden{display:none;}
 <!-- History banner shown when viewing a past program -->
 <div class="history-banner" id="historyBanner">
   <span class="history-banner-text" id="historyBannerText">Viewing past program</span>
-  <button class="btn btn-secondary btn-sm" id="backToActiveBtn">↩ Back to Active Show</button>
+  <button class="btn btn-newshow btn-sm" id="bannerNewShowBtn" style="display:none;">🎤 New Show</button>
+  <button class="btn btn-secondary btn-sm" id="backToActiveBtn">↩ Back</button>
 </div>
 
 <div class="toolbar" id="mainToolbar">
@@ -432,6 +464,10 @@ tbody tr.search-hidden{display:none;}
   <span class="search-count" id="searchCount"></span>
 </div>
 
+<div class="progress-bar-wrap" id="progressBarWrap">
+  <div class="progress-track"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+  <span class="progress-label" id="progressLabel"><b>0</b> / 0 done</span>
+</div>
 <div id="addFormContainer" style="display:none;"></div>
 <div id="historyPanelContainer" style="display:none;"></div>
 <div id="offlinePanelContainer" style="display:none;"></div>
@@ -513,7 +549,7 @@ tbody tr.search-hidden{display:none;}
 
 <!-- New Show Modal -->
 <div id="newShowModal" class="modal-overlay" style="display:none;">
-  <div class="modal" style="max-width:420px;">
+  <div class="modal" style="max-width:480px;">
     <div class="modal-header">
       <h2>🎤 Start New Show</h2>
       <button class="modal-close" id="newShowClose">✕</button>
@@ -527,10 +563,24 @@ tbody tr.search-hidden{display:none;}
         <label style="font-size:.72rem;color:var(--text-dim);display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.06em;">Date</label>
         <input class="form-input" id="newShowDate" placeholder="e.g. December 25th, 2026" autocomplete="off">
       </div>
-      <p style="font-size:.8rem;color:var(--text-dim);margin-bottom:10px;">Start with:</p>
-      <div class="import-mode-row" id="newShowModeRow">
-        <button class="import-mode-btn active" data-mode="copy">📋 Copy songs from last show</button>
-        <button class="import-mode-btn" data-mode="fresh">✨ Start fresh (empty list)</button>
+      <!-- Import from previous show -->
+      <div id="importFromShowSection" style="margin-bottom:4px;">
+        <p style="font-size:.8rem;color:var(--text-dim);margin-bottom:8px;">📋 Import songs from a previous show (optional):</p>
+        <select class="form-input" id="importFromShowSelect" style="margin-bottom:10px;">
+          <option value="">— Start fresh (no songs) —</option>
+        </select>
+        <!-- Song picker shown after a show is selected -->
+        <div id="importSongPicker" style="display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-size:.75rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;">Select songs to import</span>
+            <div style="display:flex;gap:6px;">
+              <button class="btn btn-ghost btn-sm" id="selectAllSongsBtn" style="padding:3px 8px;font-size:.7rem;">All</button>
+              <button class="btn btn-ghost btn-sm" id="deselectAllSongsBtn" style="padding:3px 8px;font-size:.7rem;">None</button>
+            </div>
+          </div>
+          <div id="importSongList" style="max-height:200px;overflow-y:auto;background:rgba(255,255,255,.04);border-radius:8px;border:1px solid var(--border);padding:4px 0;"></div>
+          <p id="importPickerCount" style="font-size:.72rem;color:var(--gold);margin-top:6px;text-align:right;"></p>
+        </div>
       </div>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px;">
         <button class="btn btn-ghost" id="newShowCancelBtn">Cancel</button>
@@ -561,6 +611,7 @@ tbody tr.search-hidden{display:none;}
 // ═══════════════════════════════════════════════════════
 // ⚠️  RUN THIS IN SUPABASE SQL EDITOR ONCE:
 //   alter table songs add column if not exists language text not null default '';
+//   alter table songs add column if not exists is_completed boolean not null default false;
 // ═══════════════════════════════════════════════════════
 const SUPABASE_URL  = 'https://afnxggkjsxezrbhnntwl.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_YenvzolmYET7XAJF_4M9Ag_yJH2AdRG';
@@ -636,17 +687,42 @@ async function loadAll(){
     programs=progs||[];
     activeProgram=programs.find(p=>p.status==='active')||null;
 
-    if(!activeProgram){
-      // First time — create default program
+    if(!activeProgram && programs.length===0){
+      // Truly first time ever — no programs exist at all, create the default
       activeProgram=await createProgram('Sparsh','June 13th, 2026');
       programs=[activeProgram,...programs];
     }
 
     viewingProgram=null;
-    await loadSongsForProgram(activeProgram.id);
-    applyProgramUI(activeProgram,false);
-    updateSwitcher();
-    setStatus(`${songs.length} song${songs.length!==1?'s':''} loaded`,'ok');
+
+    if(activeProgram){
+      await loadSongsForProgram(activeProgram.id);
+      applyProgramUI(activeProgram,false);
+      updateSwitcher();
+      setStatus(`${songs.length} song${songs.length!==1?'s':''} loaded`,'ok');
+    } else {
+      // All programs are ended — show locked state, only New Show available
+      songs=[];
+      renderTable();
+      const lastProg=programs[0]||null; // most recent ended program for display
+      if(lastProg){
+        document.getElementById('programNameDisplay').textContent=lastProg.name||'(unnamed)';
+        document.getElementById('programDateDisplay').textContent=lastProg.date?'🗓 '+lastProg.date:'';
+        document.title=(lastProg.name||'Setlist');
+      }
+      document.getElementById('progStatusPill').textContent='🔒 Show Ended';
+      document.getElementById('progStatusPill').className='prog-status-pill ended';
+      document.getElementById('addBtn').style.display='none';
+      document.getElementById('endShowBtn').style.display='none';
+      document.getElementById('endShowBtn').disabled=true;
+      document.getElementById('deleteProgBtn').style.display='none';
+      document.getElementById('editTitleBtn').style.display='none';
+      document.getElementById('actionsHeader').style.display='none';
+      document.getElementById('newShowBtn').style.display='';
+      document.getElementById('progressBarWrap').classList.remove('visible');
+      updateSwitcher();
+      setStatus('No active show','');
+    }
   }catch(e){
     setStatus('Error: '+e.message,'err');
     showToast('Could not load data','error');
@@ -766,6 +842,10 @@ function applyProgramUI(prog,isHistory){
     document.getElementById('historyBannerText').innerHTML=
       `👁 Viewing past program: <b>${prog.name}${prog.date?' · '+prog.date:''}</b> (read-only)`;
     document.body.classList.add('viewing-history');
+    // If no active show, show a New Show button in the banner
+    const hasActive=!!activeProgram;
+    document.getElementById('bannerNewShowBtn').style.display=hasActive?'none':'';
+    document.getElementById('backToActiveBtn').textContent=hasActive?'↩ Back to Active Show':'↩ Back';
   } else {
     document.body.classList.remove('viewing-history');
     document.getElementById('historyBanner').classList.remove('show');
@@ -776,8 +856,10 @@ function applyProgramUI(prog,isHistory){
       pill.textContent='● Active';
       pill.className='prog-status-pill active';
       endBtn.style.display='';
+      endBtn.disabled=false;
       newShowBtn.style.display='';
       document.getElementById('deleteProgBtn').style.display='';
+      setStatus(`${songs.length} song${songs.length!==1?'s':''}`,'ok');
     } else {
       // ended but it's the one we're managing (shouldn't normally happen)
       pill.textContent='🔒 Ended';
@@ -806,6 +888,7 @@ function renderTable(){
     const tr=document.createElement('tr');
     tr.dataset.id=song.id;
     if(!isReadOnly)tr.draggable=true;
+    if(song.is_completed)tr.classList.add('song-done');
 
     // Drag handle
     const tdD=document.createElement('td');tdD.className='drag-handle';tdD.textContent='⠿';tr.appendChild(tdD);
@@ -813,10 +896,17 @@ function renderTable(){
     const tdN=document.createElement('td');tdN.className='row-num';tdN.textContent=idx+1;tr.appendChild(tdN);
     // Song name
     const tdS=document.createElement('td');tdS.style='position:relative;';
-    if(isReadOnly){const s=document.createElement('span');s.textContent=song.song_name||'—';tdS.appendChild(s);}
+    if(isReadOnly){
+      const s=document.createElement('span');
+      s.textContent=song.song_name||'—';
+      if(song.is_completed)s.classList.add('song-done-name');
+      tdS.appendChild(s);
+    }
     else{
       const nameWrap=document.createElement('span');nameWrap.style='display:inline-flex;align-items:center;gap:4px;';
-      nameWrap.appendChild(makeEditableCell(song,'song_name',song.song_name||'—'));
+      const cellSpan=makeEditableCell(song,'song_name',song.song_name||'—');
+      if(song.is_completed)cellSpan.classList.add('song-done-name');
+      nameWrap.appendChild(cellSpan);
       if(song.is_new){const badge=document.createElement('span');badge.className='new-song-badge';badge.textContent='NEW';nameWrap.appendChild(badge);}
       tdS.appendChild(nameWrap);
     }
@@ -848,6 +938,31 @@ function renderTable(){
     const tdA=document.createElement('td');
     if(!isReadOnly){
       const div=document.createElement('div');div.className='row-actions';
+      // ── Done toggle ──
+      const doneBtn=document.createElement('button');
+      doneBtn.className='btn-done'+(song.is_completed?' done':'');
+      doneBtn.innerHTML=song.is_completed?'✅ Done':'☐ Done';
+      doneBtn.title=song.is_completed?'Click to unmark':'Click to mark as done';
+      doneBtn.onclick=async()=>{
+        const nowDone=!song.is_completed;
+        // Update local songs array first (fix for progress bar counting stale value)
+        const idx2=songs.findIndex(s=>s.id===song.id);
+        if(idx2!==-1)songs[idx2].is_completed=nowDone;
+        song.is_completed=nowDone;
+        // Update UI immediately
+        tr.classList.toggle('song-done',nowDone);
+        doneBtn.className='btn-done'+(nowDone?' done':'');
+        doneBtn.innerHTML=nowDone?'✅ Done':'☐ Done';
+        doneBtn.title=nowDone?'Click to unmark':'Click to mark as done';
+        const nameSpan=tr.querySelector('.cell-text');
+        if(nameSpan)nameSpan.classList.toggle('song-done-name',nowDone);
+        // Update progress bar immediately after local state is set
+        updateProgressBar();
+        // Persist to DB
+        await updateSong(song.id,{is_completed:nowDone});
+        showToast(nowDone?`✅ "${song.song_name}" done!`:`↩ "${song.song_name}" unmarked`,'success');
+      };
+      div.appendChild(doneBtn);
       const del=document.createElement('button');del.className='btn btn-danger btn-sm';del.innerHTML='🗑';
       del.onclick=()=>{if(confirm(`Delete "${song.song_name}"?`))deleteSong(song.id);};
       div.appendChild(del);tdA.appendChild(div);
@@ -862,6 +977,23 @@ function renderTable(){
     tbody.appendChild(tr);
   });
   updateLangStats();
+  updateProgressBar();
+}
+
+// ── Progress bar ──
+function updateProgressBar(){
+  const wrap=document.getElementById('progressBarWrap');
+  const fill=document.getElementById('progressFill');
+  const label=document.getElementById('progressLabel');
+  if(!wrap)return;
+  const isActive=activeProgram&&!viewingProgram;
+  if(!isActive||!songs.length){wrap.classList.remove('visible');return;}
+  const total=songs.length;
+  const done=songs.filter(s=>s.is_completed).length;
+  const pct=total?Math.round(done/total*100):0;
+  fill.style.width=pct+'%';
+  label.innerHTML=`<b>${done}</b> / ${total} done`;
+  wrap.classList.add('visible');
 }
 
 // ── Language stats bar ──
@@ -1111,9 +1243,25 @@ document.getElementById('endShowConfirmBtn').onclick=async()=>{
   try{
     await updateProgram(activeProgram.id,{status:'ended',ended_at:new Date().toISOString()});
     document.getElementById('endShowModal').style.display='none';
-    showToast(`🎬 "${activeProgram.name}" has ended. Time for a new show!`,'success');
-    // Show New Show modal automatically
-    setTimeout(()=>openNewShowModal(),800);
+    const endedName=activeProgram.name;
+    activeProgram=null;
+    viewingProgram=null;
+    songs=[];
+    renderTable();
+    updateProgressBar();
+    // Lock toolbar — only New Show visible
+    document.getElementById('addBtn').style.display='none';
+    document.getElementById('endShowBtn').style.display='none';
+    document.getElementById('endShowBtn').disabled=true;
+    document.getElementById('deleteProgBtn').style.display='none';
+    document.getElementById('editTitleBtn').style.display='none';
+    document.getElementById('actionsHeader').style.display='none';
+    document.getElementById('newShowBtn').style.display='';
+    document.getElementById('progStatusPill').textContent='🔒 Show Ended';
+    document.getElementById('progStatusPill').className='prog-status-pill ended';
+    document.getElementById('progressBarWrap').classList.remove('visible');
+    updateSwitcher();
+    showToast(`🎬 "${endedName}" ended! Tap New Show to continue.`,'success');
   }catch(e){showToast('Error: '+e.message,'error');}
   btn.disabled=false;btn.textContent='🎬 Yes, End Show';
 };
@@ -1121,23 +1269,83 @@ document.getElementById('endShowConfirmBtn').onclick=async()=>{
 // ═══════════════════════════════════════════════════════
 // NEW SHOW
 // ═══════════════════════════════════════════════════════
-let newShowMode='copy';
-function openNewShowModal(){
+let importPickerSongs=[];  // songs loaded from selected previous show
+
+async function openNewShowModal(){
   document.getElementById('newShowName').value='';
   document.getElementById('newShowDate').value='';
-  newShowMode='copy';
-  document.querySelectorAll('#newShowModeRow .import-mode-btn').forEach(b=>{
-    b.classList.toggle('active',b.dataset.mode==='copy');
+  document.getElementById('importSongPicker').style.display='none';
+  document.getElementById('importSongList').innerHTML='';
+  document.getElementById('importPickerCount').textContent='';
+
+  // Populate the "import from" dropdown with all past programs
+  const sel=document.getElementById('importFromShowSelect');
+  sel.innerHTML='<option value="">— Start fresh (no songs) —</option>';
+  // Refresh programs list first
+  const{data:progs}=await sb.from(PROGRAMS_TABLE).select('*').order('created_at',{ascending:false});
+  if(progs)programs=progs;
+  programs.forEach(p=>{
+    const opt=document.createElement('option');
+    opt.value=p.id;
+    opt.textContent=`${p.name}${p.date?' ('+p.date+')':''} · ${p.status==='active'?'Active':'Ended'}`;
+    sel.appendChild(opt);
   });
+
   document.getElementById('newShowModal').style.display='flex';
   setTimeout(()=>document.getElementById('newShowName').focus(),50);
 }
+
+// When a previous show is selected from dropdown — load its songs into the picker
+document.getElementById('importFromShowSelect').onchange=async function(){
+  const progId=this.value;
+  const picker=document.getElementById('importSongPicker');
+  const list=document.getElementById('importSongList');
+  const countEl=document.getElementById('importPickerCount');
+  if(!progId){picker.style.display='none';importPickerSongs=[];return;}
+
+  list.innerHTML='<div style="padding:12px;color:var(--text-dim);font-size:.82rem;">Loading…</div>';
+  picker.style.display='block';
+  const{data,error}=await sb.from(SONGS_TABLE).select('*').eq('program_id',progId).order('position',{ascending:true});
+  importPickerSongs=(data||[]);
+  list.innerHTML='';
+  if(!importPickerSongs.length){
+    list.innerHTML='<div style="padding:10px 12px;color:var(--text-dim);font-size:.82rem;">No songs in this program.</div>';
+    countEl.textContent='';return;
+  }
+  importPickerSongs.forEach((s,i)=>{
+    const item=document.createElement('label');item.className='import-song-item';
+    const cb=document.createElement('input');cb.type='checkbox';cb.checked=true;cb.dataset.idx=i;
+    cb.onchange=updateImportPickerCount;
+    const info=document.createElement('div');info.className='import-song-item-info';
+    const nm=document.createElement('div');nm.className='import-song-item-name';nm.textContent=s.song_name||'(unnamed)';
+    const meta=document.createElement('div');meta.className='import-song-item-meta';
+    meta.textContent=[s.language,s.singers&&s.singers.length?s.singers.join(', '):''].filter(Boolean).join(' · ')||'No language / singer';
+    info.appendChild(nm);info.appendChild(meta);
+    item.appendChild(cb);item.appendChild(info);
+    list.appendChild(item);
+  });
+  updateImportPickerCount();
+};
+
+function updateImportPickerCount(){
+  const cbs=document.querySelectorAll('#importSongList input[type=checkbox]');
+  const checked=[...cbs].filter(c=>c.checked).length;
+  document.getElementById('importPickerCount').textContent=checked?`${checked} song${checked!==1?'s':''} selected`:'No songs selected';
+}
+
+document.getElementById('selectAllSongsBtn').onclick=()=>{
+  document.querySelectorAll('#importSongList input[type=checkbox]').forEach(c=>c.checked=true);
+  updateImportPickerCount();
+};
+document.getElementById('deselectAllSongsBtn').onclick=()=>{
+  document.querySelectorAll('#importSongList input[type=checkbox]').forEach(c=>c.checked=false);
+  updateImportPickerCount();
+};
+
 document.getElementById('newShowClose').onclick=()=>document.getElementById('newShowModal').style.display='none';
 document.getElementById('newShowCancelBtn').onclick=()=>document.getElementById('newShowModal').style.display='none';
 document.getElementById('newShowModal').addEventListener('click',e=>{if(e.target===e.currentTarget)document.getElementById('newShowModal').style.display='none';});
-document.querySelectorAll('#newShowModeRow .import-mode-btn').forEach(b=>{
-  b.onclick=()=>{newShowMode=b.dataset.mode;document.querySelectorAll('#newShowModeRow .import-mode-btn').forEach(x=>x.classList.toggle('active',x===b));};
-});
+
 document.getElementById('newShowConfirmBtn').onclick=async()=>{
   const name=document.getElementById('newShowName').value.trim();
   const date=document.getElementById('newShowDate').value.trim();
@@ -1147,16 +1355,24 @@ document.getElementById('newShowConfirmBtn').onclick=async()=>{
     const newProg=await createProgram(name,date);
     programs.unshift(newProg);
 
-    if(newShowMode==='copy'&&songs.length>0){
-      // Copy songs from the previous show
-      const copies=songs.map((s,i)=>({
-        song_name:s.song_name,singers:s.singers,
-        karaoke_link:s.karaoke_link,
+    // Check if user picked any songs to import
+    const cbs=[...document.querySelectorAll('#importSongList input[type=checkbox]')];
+    const selectedSongs=cbs
+      .filter(c=>c.checked)
+      .map(c=>importPickerSongs[parseInt(c.dataset.idx)])
+      .filter(Boolean);
+
+    if(selectedSongs.length>0){
+      const copies=selectedSongs.map((s,i)=>({
+        song_name:s.song_name,
+        singers:s.singers||[],
+        karaoke_link:s.karaoke_link||'',
         language:s.language||'',
+        is_completed:false,
         position:i+1,
         program_id:newProg.id
       }));
-      const{data:newSongs,error:se}=await sb.from(SONGS_TABLE).insert(copies).select();
+      const{error:se}=await sb.from(SONGS_TABLE).insert(copies);
       if(se)throw se;
     }
 
@@ -1166,7 +1382,7 @@ document.getElementById('newShowConfirmBtn').onclick=async()=>{
     await loadSongsForProgram(activeProgram.id);
     applyProgramUI(activeProgram,false);
     updateSwitcher();
-    showToast(`🎤 "${name}" is ready!`,'success');
+    showToast(`🎤 "${name}" is live with ${selectedSongs.length} song${selectedSongs.length!==1?'s':''}!`,'success');
   }catch(e){showToast('Error: '+e.message,'error');}
   btn.disabled=false;btn.textContent='🎤 Start New Show';
 };
@@ -1236,11 +1452,48 @@ let historyPanelOpen=false;
 document.getElementById('historyBtn').onclick=toggleHistoryPanel;
 document.getElementById('backToActiveBtn').onclick=()=>{
   viewingProgram=null;
-  loadSongsForProgram(activeProgram.id);
-  applyProgramUI(activeProgram,false);
   historyPanelOpen=false;
   document.getElementById('historyPanelContainer').style.display='none';
   document.getElementById('historyPanelContainer').innerHTML='';
+  document.getElementById('historyBanner').classList.remove('show');
+  document.body.classList.remove('viewing-history');
+  if(activeProgram){
+    // There is an active show — go back to it
+    loadSongsForProgram(activeProgram.id);
+    applyProgramUI(activeProgram,false);
+  } else {
+    // No active show — restore the ended/locked state
+    songs=[];
+    renderTable();
+    const lastProg=programs[0]||null;
+    if(lastProg){
+      document.getElementById('programNameDisplay').textContent=lastProg.name||'(unnamed)';
+      document.getElementById('programDateDisplay').textContent=lastProg.date?'🗓 '+lastProg.date:'';
+    }
+    document.getElementById('progStatusPill').textContent='🔒 Show Ended';
+    document.getElementById('progStatusPill').className='prog-status-pill ended';
+    document.getElementById('addBtn').style.display='none';
+    document.getElementById('endShowBtn').style.display='none';
+    document.getElementById('endShowBtn').disabled=true;
+    document.getElementById('deleteProgBtn').style.display='none';
+    document.getElementById('editTitleBtn').style.display='none';
+    document.getElementById('actionsHeader').style.display='none';
+    document.getElementById('newShowBtn').style.display='';
+    document.getElementById('progressBarWrap').classList.remove('visible');
+    updateSwitcher();
+    setStatus('No active show','');
+  }
+};
+
+document.getElementById('bannerNewShowBtn').onclick=()=>{
+  // Close history view first, then open New Show modal
+  viewingProgram=null;
+  historyPanelOpen=false;
+  document.getElementById('historyPanelContainer').style.display='none';
+  document.getElementById('historyPanelContainer').innerHTML='';
+  document.getElementById('historyBanner').classList.remove('show');
+  document.body.classList.remove('viewing-history');
+  openNewShowModal();
 };
 
 async function toggleHistoryPanel(){
@@ -1589,41 +1842,135 @@ function setupTouchDrag(tr){
 // ═══════════════════════════════════════════════════════
 async function deleteProgram(prog){
   const isActive=prog.status==='active';
-  const activeCount=programs.filter(p=>p.status==='active').length;
-  if(isActive&&activeCount<=1){
-    showToast('Cannot delete the only active program. End it first or create another.','error');
+
+  if(isActive){
+    // Show a dedicated confirm modal instead of a blocking toast
+    showDeleteActiveModal(prog);
     return;
   }
-  const confirmed=confirm(`Delete "${prog.name}"?
 
-This will permanently delete the program AND all its ${isActive?'songs':'songs'} from history. This cannot be undone.`);
+  // Ended program — simple confirm then delete
+  const confirmed=confirm(`Delete "${prog.name}"?\n\nThis will permanently remove the program and all its songs from history. This cannot be undone.`);
   if(!confirmed)return;
+  await doDeleteProgram(prog);
+}
+
+function showDeleteActiveModal(prog){
+  // Build a lightweight inline modal dynamically
+  const existing=document.getElementById('deleteActiveModal');
+  if(existing)existing.remove();
+
+  const overlay=document.createElement('div');
+  overlay.id='deleteActiveModal';
+  overlay.className='modal-overlay';
+  overlay.style.display='flex';
+  overlay.innerHTML=`
+    <div class="modal" style="max-width:400px;">
+      <div class="modal-header">
+        <h2>🗑 Delete "${prog.name}"?</h2>
+        <button class="modal-close" id="delActiveClose">✕</button>
+      </div>
+      <div class="modal-body" style="padding:20px;">
+        <p style="color:var(--text-dim);font-size:.88rem;line-height:1.7;margin-bottom:20px;">
+          This is an <b style="color:var(--green)">active show</b>. To delete it you must end it first.<br><br>
+          Choose an option:
+        </p>
+        <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
+          <button class="btn btn-end" id="delActiveEndDelete" style="justify-content:center;padding:10px;">
+            🎬 End Show &amp; Delete permanently
+          </button>
+          <button class="btn btn-secondary" id="delActiveEndOnly" style="justify-content:center;padding:10px;">
+            🔒 End Show only (keep in history)
+          </button>
+        </div>
+        <div style="display:flex;justify-content:flex-end;">
+          <button class="btn btn-ghost" id="delActiveCancel">Cancel</button>
+        </div>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+
+  const close=()=>overlay.remove();
+  overlay.addEventListener('click',e=>{if(e.target===overlay)close();});
+  document.getElementById('delActiveClose').onclick=close;
+  document.getElementById('delActiveCancel').onclick=close;
+
+  document.getElementById('delActiveEndDelete').onclick=async()=>{
+    close();
+    // End the show first
+    await updateProgram(prog.id,{status:'ended',ended_at:new Date().toISOString()});
+    await doDeleteProgram({...prog,status:'ended'});
+  };
+
+  document.getElementById('delActiveEndOnly').onclick=async()=>{
+    close();
+    await updateProgram(prog.id,{status:'ended',ended_at:new Date().toISOString()});
+    // Update local state exactly like endShow does
+    programs=programs.map(p=>p.id===prog.id?{...p,status:'ended',ended_at:new Date().toISOString()}:p);
+    activeProgram=null;
+    viewingProgram=null;
+    songs=[];
+    renderTable();
+    updateProgressBar();
+    document.getElementById('addBtn').style.display='none';
+    document.getElementById('endShowBtn').style.display='none';
+    document.getElementById('endShowBtn').disabled=true;
+    document.getElementById('deleteProgBtn').style.display='none';
+    document.getElementById('editTitleBtn').style.display='none';
+    document.getElementById('actionsHeader').style.display='none';
+    document.getElementById('newShowBtn').style.display='';
+    document.getElementById('progStatusPill').textContent='🔒 Show Ended';
+    document.getElementById('progStatusPill').className='prog-status-pill ended';
+    document.getElementById('progressBarWrap').classList.remove('visible');
+    updateSwitcher();
+    setStatus('No active show','');
+    showToast(`🔒 "${prog.name}" ended and kept in history`,'success');
+    if(historyPanelOpen)renderHistoryPanel();
+  };
+}
+
+async function doDeleteProgram(prog){
   try{
-    // Songs cascade-delete via FK, but let's be explicit
     await sb.from(SONGS_TABLE).delete().eq('program_id',prog.id);
     const{error}=await sb.from(PROGRAMS_TABLE).delete().eq('id',prog.id);
     if(error)throw error;
     programs=programs.filter(p=>p.id!==prog.id);
-    // If we just deleted the active program we were on, switch to next active
+
     if(activeProgram&&activeProgram.id===prog.id){
       activeProgram=programs.find(p=>p.status==='active')||null;
-      if(!activeProgram){
-        // Create a fresh one if none left
-        activeProgram=await createProgram('New Show','');
-        programs.unshift(activeProgram);
-      }
       viewingProgram=null;
-      await loadSongsForProgram(activeProgram.id);
-      applyProgramUI(activeProgram,false);
+      songs=[];
+      if(activeProgram){
+        await loadSongsForProgram(activeProgram.id);
+        applyProgramUI(activeProgram,false);
+      } else {
+        renderTable();
+        document.getElementById('addBtn').style.display='none';
+        document.getElementById('endShowBtn').style.display='none';
+        document.getElementById('deleteProgBtn').style.display='none';
+        document.getElementById('editTitleBtn').style.display='none';
+        document.getElementById('actionsHeader').style.display='none';
+        document.getElementById('newShowBtn').style.display='';
+        document.getElementById('progStatusPill').textContent='🔒 Show Ended';
+        document.getElementById('progStatusPill').className='prog-status-pill ended';
+        document.getElementById('progressBarWrap').classList.remove('visible');
+        setStatus('No active show','');
+      }
       updateSwitcher();
     } else if(viewingProgram&&viewingProgram.id===prog.id){
-      // Was viewing this deleted history item — go back to active
       viewingProgram=null;
-      await loadSongsForProgram(activeProgram.id);
-      applyProgramUI(activeProgram,false);
+      if(activeProgram){
+        await loadSongsForProgram(activeProgram.id);
+        applyProgramUI(activeProgram,false);
+      } else {
+        songs=[];renderTable();
+        document.getElementById('historyBanner').classList.remove('show');
+        document.body.classList.remove('viewing-history');
+        setStatus('No active show','');
+      }
     }
+
     showToast(`"${prog.name}" deleted`,'success');
-    // Re-render history panel if open
     if(historyPanelOpen)renderHistoryPanel();
   }catch(e){showToast('Delete failed: '+e.message,'error');}
 }
